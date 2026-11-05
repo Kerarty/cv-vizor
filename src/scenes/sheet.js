@@ -25,23 +25,12 @@ CV.scenes.sheet = (view, app) => {
   const title = CV.makeText(CV.t('sheet.title'), 40, C.paper, { display: true });
   title.anchor.set(0.5);
   addAt(title, W() / 2, y + 52);
-  // лента из Xmas-пака за заголовком
-  const ribbon = CV.sprite('ribbon');
-  if (ribbon) {
-    const rw = Math.min(560, W() - 80), rh = rw * (138 / 882);
-    ribbon.width = rw; ribbon.height = rh;
-    ribbon.anchor.set(0.5);
-    ribbon.position.set(W() / 2, y + 52);
-    ribbon.alpha = 0.95;
-    content.addChildAt(ribbon, content.getChildIndex(title));
-    title.style.fill = 0x3d2606;
-    title.style.dropShadow = null;
-  }
   const golden = CV.State.nuggets.size >= 3;
   if (golden) {
     const g = new PIXI.Graphics();
     g.beginFill(C.gold, 0.25); g.drawRoundedRect(px + 24, y + 88, pw - 48, 30, 15); g.endFill();
-    g.lineStyle(1.5, C.gold); g.drawRoundedRect(px + 24, y + 88, pw - 48, 30, 15);
+    g.roundRect(px + 24, y + 88, pw - 48, 30, 15);
+    g.stroke({ width: 1.5, color: C.gold });
     const gt = CV.makeText('★ ' + CV.t('sheet.golden'), 14, C.goldLight, { weight: '800' });
     gt.anchor.set(0.5); gt.position.set(W() / 2, y + 103);
     content.addChild(g, gt);
@@ -126,7 +115,8 @@ CV.scenes.sheet = (view, app) => {
     const t = CV.makeText(CV.t('sheet.missingText'), 14, 0xf2d7b0, { wrap: true, wrapWidth: pw - 100, weight: '500' });
     const box = new PIXI.Graphics();
     box.beginFill(0x8f2f27, 0.2); box.drawRoundedRect(px + 30, y - 8, pw - 60, t.height + 26, 10); box.endFill();
-    box.lineStyle(1.5, C.brusnika, 0.8); box.drawRoundedRect(px + 30, y - 8, pw - 60, t.height + 26, 10);
+    box.roundRect(px + 30, y - 8, pw - 60, t.height + 26, 10);
+    box.stroke({ width: 1.5, color: C.brusnika, alpha: 0.8 });
     addAt(box, 0, 0);
     addAt(t, px + 44, y);
     y += t.height + 30;

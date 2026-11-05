@@ -73,10 +73,10 @@ window.CV = window.CV || {};
     g.beginFill(C.paperDark); g.drawRoundedRect(0, 0, w, h, 14); g.endFill();
     g.beginFill(C.paper); g.drawRoundedRect(4, 4, w - 8, h - 8, 11); g.endFill();
     // волокна
-    g.lineStyle(1, C.paperDark, 0.5);
     for (let i = 1; i < 4; i++) {
       g.moveTo(14, h * i / 4 + 6); g.lineTo(w - 14, h * i / 4 + 2);
     }
+    g.stroke({ width: 1, color: C.paperDark, alpha: 0.5 });
     return g;
   };
 
@@ -118,7 +118,8 @@ window.CV = window.CV || {};
     const f = splitAlpha(opts.fill || 0x000000);
     g.beginFill(f.c, f.a); g.drawRoundedRect(0, 0, w, h, h / 2); g.endFill();
     const l = splitAlpha(opts.line || C.goldDark);
-    g.lineStyle({ width: 1.5, color: l.c, alpha: l.a * 0.8 }); g.drawRoundedRect(0, 0, w, h, h / 2);
+    g.roundRect(0, 0, w, h, h / 2);
+    g.stroke({ width: 1.5, color: l.c, alpha: l.a * 0.8 });
     t.position.set(pad, h / 2 - 1); t.anchor.set(0, 0.5);
     c.addChild(g, t);
     c.w = w; c.h = h;
@@ -149,12 +150,12 @@ window.CV = window.CV || {};
         g.beginFill(C.brusnika); g.drawRoundedRect(3, 1, 22, 4, 2); g.drawRoundedRect(3, 23, 22, 4, 2); g.endFill();
         break;
       case 'check':
-        g.lineStyle({ width: 5, color, cap: 'round', join: 'round' });
         g.moveTo(5, 15); g.lineTo(12, 22); g.lineTo(23, 7);
+        g.stroke({ width: 5, color, cap: 'round', join: 'round' });
         break;
       case 'cross':
-        g.lineStyle({ width: 5, color, cap: 'round' });
         g.moveTo(7, 7); g.lineTo(21, 21); g.moveTo(21, 7); g.lineTo(7, 21);
+        g.stroke({ width: 5, color, cap: 'round' });
         break;
       case 'star': {
         const pts = [];
@@ -177,18 +178,20 @@ window.CV = window.CV || {};
         g.beginFill(C.gold); g.drawRoundedRect(10, 20, 14, 8, 2); g.endFill();
         break;
       case 'lang':
-        g.lineStyle(2, color); g.drawCircle(14, 14, 11);
+        g.circle(14, 14, 11); g.stroke({ width: 2, color });
         g.beginFill(color); g.drawEllipse(14, 14, 5, 11); g.endFill();
-        g.lineStyle(2, color); g.moveTo(3.5, 10); g.lineTo(24.5, 10); g.moveTo(3.5, 18); g.lineTo(24.5, 18);
+        g.moveTo(3.5, 10); g.lineTo(24.5, 10); g.moveTo(3.5, 18); g.lineTo(24.5, 18);
+        g.stroke({ width: 2, color });
         break;
       case 'sound':
         g.beginFill(color); g.drawPolygon([5, 11, 11, 11, 17, 5, 17, 23, 11, 17, 5, 17]); g.endFill();
-        g.lineStyle(2.4, color); g.arc(18, 14, 6, -0.9, 0.9); g.arc(18, 14, 10, -0.9, 0.9);
+        g.arc(18, 14, 6, -0.9, 0.9); g.arc(18, 14, 10, -0.9, 0.9);
+        g.stroke({ width: 2.4, color });
         break;
       case 'mute':
         g.beginFill(color); g.drawPolygon([5, 11, 11, 11, 17, 5, 17, 23, 11, 17, 5, 17]); g.endFill();
-        g.lineStyle(2.6, C.brusnika, 1);
         g.moveTo(20, 9); g.lineTo(27, 19); g.moveTo(27, 9); g.lineTo(20, 19);
+        g.stroke({ width: 2.6, color: C.brusnika });
         break;
       // ── иконки станций ──
       case 'tent':
@@ -210,10 +213,10 @@ window.CV = window.CV || {};
         g.beginFill(C.sky, 0.9); g.drawCircle(21, 4, 3.4); g.endFill();
         break;
       case 'loop':
-        g.lineStyle({ width: 4.5, color: 0x7f6bd9, cap: 'round' });
         g.arc(14, 14, 9, 0.6, Math.PI * 2 - 0.6);
-        g.lineStyle({ width: 4.5, color, cap: 'round' });
+        g.stroke({ width: 4.5, color: 0x7f6bd9, cap: 'round' });
         g.moveTo(20, 6); g.lineTo(20, 13); g.lineTo(13, 13);
+        g.stroke({ width: 4.5, color, cap: 'round' });
         break;
       case 'harbor':
         g.beginFill(0x4a6d84); g.drawRect(2, 19, 24, 5); g.endFill();

@@ -50,7 +50,7 @@ CV.scenes.victory = (view, app) => {
     CV.t('victory.nuggets', { n: CV.State.nuggets.size }),
     CV.t('victory.time', { s: Math.floor(s0 / 1000) }),
   ];
-  const statsT = CV.makeText(stats.join('   ·   '), 17, 0xcfe0ea, { weight: '700', align: 'center' });
+  const statsT = CV.makeText(stats.join('   ·   '), 17, 0x4a5a64, { weight: '800', align: 'center' });
   statsT.anchor.set(0.5); statsT.position.set(W() / 2, 570);
   const thanks = CV.makeText(CV.t('victory.thanks'), 15, 0x9fb8c9, { align: 'center', wrap: true, wrapWidth: W() - 120 });
   thanks.anchor.set(0.5); thanks.position.set(W() / 2, 620);

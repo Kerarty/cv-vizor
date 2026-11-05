@@ -33,7 +33,7 @@ CV.scenes.tuner = (view, app) => {
 
   sliderDefs.forEach(def => {
     const row = new PIXI.Container();
-    row.position.set((W() - sliderW) / 2 - 90, sTop);
+    row.position.set(Math.max(16, (W() - sliderW) / 2 - 20), sTop);
     const labT = CV.makeText(CV.t(def.label), 16, 0xe8f2f7, { weight: '700' });
     const valT = CV.makeText(def.fmt(params[def.key]), 17, C.gold, { weight: '800' });
     valT.anchor.set(0, 0); valT.position.set(sliderW - 40, -2);
@@ -48,7 +48,8 @@ CV.scenes.tuner = (view, app) => {
     const knob = new PIXI.Graphics();
     knob.beginFill(C.gold); knob.drawCircle(0, 6, 13); knob.endFill();
     knob.beginFill(C.goldLight, 0.9); knob.drawCircle(-3, 3, 4); knob.endFill();
-    knob.lineStyle(2, C.goldDark); knob.drawCircle(0, 6, 13);
+    knob.circle(0, 6, 13);
+    knob.stroke({ width: 2, color: C.goldDark });
     track.addChild(tg, fillG, knob);
     track.eventMode = 'static'; track.cursor = 'pointer';
     const unitT = CV.makeText(CV.t(def.unit), 12, 0x9fb8c9);
@@ -87,7 +88,7 @@ CV.scenes.tuner = (view, app) => {
 
   // кривая плана: ровно / лавина
   const curveRow = new PIXI.Container();
-  curveRow.position.set((W() - sliderW) / 2 - 90, sTop);
+  curveRow.position.set(Math.max(16, (W() - sliderW) / 2 - 20), sTop);
   const curveLab = CV.makeText(CV.t('tuner.curve'), 16, 0xe8f2f7, { weight: '700' });
   const bFlat = CV.makeButton(CV.t('tuner.flat'), 150, { height: 42, size: 15, onTap: () => { params.k = 1; syncCurve(); redraw(); } });
   const bAval = CV.makeButton(CV.t('tuner.avalanche'), 170, { height: 42, size: 15, onTap: () => { params.k = 1.6; syncCurve(); redraw(); } });
@@ -112,17 +113,17 @@ CV.scenes.tuner = (view, app) => {
     g.clear();
     // фон и сетка
     g.beginFill(0x0e1a23, 0.8); g.drawRoundedRect(0, 0, chartW, chartH, 12); g.endFill();
-    g.lineStyle(1, 0x335061, 0.4);
     for (let i = 1; i < 5; i++) { g.moveTo(46, chartH * i / 5); g.lineTo(chartW - 12, chartH * i / 5); }
+    g.stroke({ width: 1, color: 0x335061, alpha: 0.4 });
     const maxV = Math.max(result.goal, ...result.series.pro) * 1.08 || 1;
     const X = i => 46 + (chartW - 66) * (i / Math.max(1, params.T - 1));
     const Y = v => chartH - 22 - (chartH - 44) * (v / maxV);
     // цель
-    g.lineStyle(2, C.brusnika, 0.9, 0.5);
     g.moveTo(46, Y(result.goal)); g.lineTo(chartW - 12, Y(result.goal));
+    g.stroke({ width: 2, color: C.brusnika, alpha: 0.9 });
     const line = (arr, color, width = 3, alpha = 1) => {
-      g.lineStyle({ width, color, alpha, cap: 'round', join: 'round' });
       arr.forEach((v, i) => i ? g.lineTo(X(i), Y(v)) : g.moveTo(X(i), Y(v)));
+      g.stroke({ width, color, alpha, cap: 'round', join: 'round' });
     };
     line(result.series.plan, C.gold, 3.5);
     line(result.series.avg, 0x59d6a2);
@@ -173,6 +174,7 @@ CV.scenes.tuner = (view, app) => {
   verdictT.anchor.set(0.5); verdictSub.anchor.set(0.5);
   const note = CV.makeText(CV.t('tuner.cohortNote'), 12, 0x7d97a8, { align: 'center' });
   note.anchor.set(0.5);
+  note.position.set(W() / 2, 124);
   view.addChild(verdictT, verdictSub, note);
 
   const back = CV.makeButton(CV.t('common.back'), 170, { height: 54, size: 19, onTap: () => { CV.Sfx.tap(); CV.Scenes.switchTo('map'); } });
@@ -192,7 +194,6 @@ CV.scenes.tuner = (view, app) => {
     verdictT.position.set(W() / 2, sTop + 5 * 40 + 22);
     verdictSub.text = result.passed === 5 ? CV.t('tuner.verdictOk') : CV.t('tuner.verdictFail');
     verdictSub.position.set(W() / 2, sTop + 5 * 40 + 56);
-    note.position.set(W() / 2, H() - 96);
   };
   redraw();
 

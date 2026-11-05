@@ -1,0 +1,6 @@
+# raw assets kept out of repo history; only processed/embedded artifacts are committed
+assets/raw/
+node_modules/
+*.log
+.DS_Store
+Thumbs.db

@@ -5,7 +5,7 @@ CV.scenes.title = (view, app) => {
   const layers = new PIXI.Container();
   view.addChild(layers);
 
-  // небо
+  // небо: глубокая ночь, градиент из настоящего ассета (тонируем)
   const sky = new PIXI.Graphics();
   const drawSky = () => {
     sky.clear();
@@ -31,19 +31,15 @@ CV.scenes.title = (view, app) => {
   const aurora = CV.makeAurora(app, { y: 170, alpha: 0.55 });
   layers.addChild(aurora);
 
-  // дальние ели (силуэты)
-  const far = new PIXI.Graphics();
-  const pine = (g, x, y, s, color) => {
-    g.beginFill(color);
-    for (let i = 0; i < 3; i++) {
-      const w = (34 - i * 8) * s, yy = y - i * 16 * s;
-      g.drawPolygon([x, yy - 26 * s, x + w / 2, yy, x - w / 2, yy]);
-    }
-    g.drawRect(x - 2.5 * s, y, 5 * s, 10 * s);
-    g.endFill();
-  };
-  for (let i = 0; i < 14; i++) pine(far, 20 + i * 52 + Math.random() * 20, 560 + Math.random() * 24, 0.8 + Math.random() * 0.5, 0x18292f);
-  layers.addChild(far);
+  // даль: настоящий силуэт леса Park Zone в ночном тоне
+  const far = CV.sprite('map-treeline-winter');
+  if (far) {
+    far.width = W(); far.height = 150;
+    far.position.set(0, 472);
+    far.tint = 0x7d93a4;
+    far.alpha = 0.5;
+    layers.addChild(far);
+  }
 
   // снежная земля
   const ground = new PIXI.Graphics();
@@ -59,21 +55,18 @@ CV.scenes.title = (view, app) => {
   drawGround();
   layers.addChild(ground);
 
-  // станция с тёплым окном
+  // станция: настоящий дом из пака + тёплое окно и фонарь кодом
   const hut = new PIXI.Container();
-  const hutG = new PIXI.Graphics();
-  hutG.beginFill(CV.COLORS.woodDark); hutG.drawPolygon([0, 0, 90, 0, 90, 66, 0, 66]); hutG.endFill();
-  hutG.beginFill(CV.COLORS.wood); hutG.drawRect(4, 8, 82, 54); hutG.endFill();
-  hutG.beginFill(CV.COLORS.woodDark); hutG.drawPolygon([-8, 2, 45, -34, 98, 2]); hutG.endFill();
-  hutG.beginFill(0xd9c8a6); hutG.drawPolygon([-6, 0, 45, -30, 96, 0]); hutG.endFill();
-  hutG.beginFill(CV.COLORS.gold); hutG.drawRect(18, 22, 20, 18); hutG.endFill();
-  hutG.beginFill(CV.COLORS.goldLight, 0.85); hutG.drawRect(20, 24, 16, 7); hutG.endFill();
-  hutG.beginFill(0x3d2606); hutG.drawRect(56, 30, 22, 36); hutG.endFill();
   const glow = new PIXI.Graphics();
-  glow.beginFill(CV.COLORS.gold, 0.16); glow.drawCircle(28, 31, 46); glow.endFill();
-  hut.addChild(glow, hutG);
-  hut.position.set(310, 700);
-  hut.scale.set(1.25);
+  glow.beginFill(CV.COLORS.gold, 0.16); glow.drawCircle(0, -40, 60); glow.endFill();
+  hut.addChild(glow);
+  const house = CV.sprite('b-title-house');
+  if (house) {
+    house.height = 150; house.width = 150 * 340 / 440;
+    house.anchor.set(0.5, 0.92);
+    hut.addChild(house);
+  }
+  hut.position.set(360, 730);
   layers.addChild(hut);
 
   // фонарь
@@ -150,7 +143,7 @@ CV.scenes.title = (view, app) => {
   drawSndIcon();
   row.addChild(bSnd);
 
-  row.children.forEach((c, i) => { c.x = i * 70; });
+  row.children.forEach((c, i) => { c.x = i * 104; });
   row.position.set(W() / 2 - 70, 1046);
   ui.addChild(row);
 

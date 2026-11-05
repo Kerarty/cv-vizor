@@ -12,22 +12,20 @@ CV.scenes.victory = (view, app) => {
   const aurora = CV.makeAurora(app, { y: 150, alpha: 0.6 });
   view.addChild(aurora);
 
-  // форт крупно
+  // форт: настоящее кирпичное здание + флаг
   const fort = new PIXI.Container();
-  const fg = new PIXI.Graphics();
-  fg.beginFill(0x7d8791);
-  fg.drawRect(-110, -40, 60, 120); fg.drawRect(-30, -40, 60, 120); fg.drawRect(50, -40, 60, 120);
-  fg.drawRect(-110, -66, 60, 26); fg.drawRect(-30, -66, 60, 26); fg.drawRect(50, -66, 60, 26);
-  for (let x = -104; x < 50; x += 30) fg.drawRect(x, -78, 18, 14);
-  fg.endFill();
-  fg.beginFill(0x5a636c); fg.drawRoundedRect(-24, 30, 48, 50, 8); fg.endFill();
-  fg.beginFill(0x000000, 0.33); fg.drawRoundedRect(-16, 40, 32, 40, 6); fg.endFill();
-  // флаг
-  fg.beginFill(C.brusnika); fg.drawRect(-2, -120, 3, 44); fg.endFill();
-  fg.beginFill(C.gold); fg.drawPolygon([1, -120, 34, -110, 1, -100]); fg.endFill();
-  fort.addChild(fg);
-  fort.position.set(W() / 2, 330);
-  fort.scale.set(1.4);
+  const fortSpr = CV.sprite('b-fort');
+  if (fortSpr) {
+    fortSpr.height = 320; fortSpr.width = 320;
+    fortSpr.anchor.set(0.5, 0.94);
+    fortSpr.position.set(0, 40);
+    fort.addChild(fortSpr);
+    const flag = new PIXI.Graphics();
+    flag.beginFill(C.brusnika); flag.drawRect(-2, -230, 3, 60); flag.endFill();
+    flag.beginFill(C.gold); flag.drawPolygon([1, -230, 40, -218, 1, -206]); flag.endFill();
+    fort.addChild(flag);
+  }
+  fort.position.set(W() / 2, 380);
   view.addChild(fort);
 
   const ground = new PIXI.Graphics();
@@ -74,7 +72,7 @@ CV.scenes.victory = (view, app) => {
     update(dt) {
       snow.update(dt);
       aurora.update(dt);
-      fort.y = 330 + Math.sin(performance.now() / 900) * 4;
+      fort.y = 380 + Math.sin(performance.now() / 900) * 4;
     },
   };
 };

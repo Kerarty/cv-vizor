@@ -39,12 +39,12 @@ const fontsCss = FONTS.map(([file, family, style, weight, fmt]) => {
     `src:url(data:font/${fmt};base64,${b64}) format('${fmt === 'truetype' ? 'truetype' : 'woff2'}');}`;
 }).join('\n');
 
-// 2. спрайты assets/art → CV.ASSETS (dataURL)
+// 2. спрайты assets/art → CV.ASSETS (dataURL, webp/png)
 const artDir = path.join(ROOT, 'assets/art');
 const assetsJs = fs.existsSync(artDir)
   ? 'window.CV = window.CV || {};\nCV.ASSETS = {\n' + fs.readdirSync(artDir)
-      .filter(f => f.endsWith('.png'))
-      .map(f => `  '${f.replace('.png', '')}': 'data:image/png;base64,` +
+      .filter(f => f.endsWith('.webp') || f.endsWith('.png'))
+      .map(f => `  '${f.replace(/\.(webp|png)$/, '')}': 'data:image/${f.endsWith('.webp') ? 'webp' : 'png'};base64,` +
         fs.readFileSync(path.join(artDir, f)).toString('base64') + `',`)
       .join('\n') + '\n};'
   : 'window.CV = window.CV || {}; CV.ASSETS = {};';

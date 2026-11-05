@@ -18,42 +18,43 @@ CV.scenes.sheet = (view, app) => {
   let y = 26;
   const addAt = (el, x, yy) => { el.position.set(x, yy); content.addChild(el); return el; };
 
-  const panel = CV.makePanel(Math.min(660, W() - 40), 1, { radius: 22 });
+  const panel = CV.makePanel(Math.min(660, W() - 40), 1, { forceWood: true });
   addAt(panel, (W() - panel.width) / 2, y);
   const px = panel.x, pw = panel.width;
+  const BX = px + 44, BW = pw - 88;
 
   const title = CV.makeText(CV.t('sheet.title'), 40, C.paper, { display: true });
   title.anchor.set(0.5);
-  addAt(title, W() / 2, y + 52);
+  addAt(title, W() / 2, y + 132);
   const golden = CV.State.nuggets.size >= 3;
   if (golden) {
     const g = new PIXI.Graphics();
-    g.beginFill(C.gold, 0.25); g.drawRoundedRect(px + 24, y + 88, pw - 48, 30, 15); g.endFill();
-    g.roundRect(px + 24, y + 88, pw - 48, 30, 15);
+    g.beginFill(C.gold, 0.25); g.drawRoundedRect(BX, y + 172, BW, 32, 16); g.endFill();
+    g.roundRect(BX, y + 172, BW, 32, 16);
     g.stroke({ width: 1.5, color: C.gold });
     const gt = CV.makeText('★ ' + CV.t('sheet.golden'), 14, C.goldLight, { weight: '800' });
-    gt.anchor.set(0.5); gt.position.set(W() / 2, y + 103);
+    gt.anchor.set(0.5); gt.position.set(W() / 2, y + 188);
     content.addChild(g, gt);
   }
 
   const role = CV.makeText(CV.t('sheet.role'), 16, 0xcfe0ea, { align: 'center', weight: '600' });
   role.anchor.set(0.5);
-  addAt(role, W() / 2, y + (golden ? 134 : 118));
+  addAt(role, W() / 2, y + (golden ? 222 : 204));
 
   // ── характеристики ──
-  y = (golden ? 170 : 152);
+  y = (golden ? 258 : 240);
   const statLabels = { design: 'Гейм-дизайн|Game design', balance: 'Баланс и экономика|Balance & economy', proto: 'Прототипирование|Prototyping', docs: 'Документация|Documentation' };
   CV.DATA.sheetStats.forEach((s, i) => {
     const [ru, en] = statLabels[s.id].split('|');
     const label = CV.makeText(CV.getLang() === 'ru' ? ru : en, 15, 0xe8f2f7, { weight: '700' });
-    label.position.set(px + 44, y + i * 34 + 4);
+    label.position.set(BX, y + i * 34 + 4);
     const track = new PIXI.Graphics();
-    track.beginFill(0x12212c, 0.53); track.drawRoundedRect(px + 44 + 190, y + i * 34 + 6, 300, 14, 7); track.endFill();
+    track.beginFill(0x12212c, 0.53); track.drawRoundedRect(BX + 190, y + i * 34 + 6, BW - 190, 14, 7); track.endFill();
     const fillG = new PIXI.Graphics();
-    fillG.beginFill(C.gold); fillG.drawRect(px + 44 + 190, y + i * 34 + 6, 1, 14); fillG.endFill();
+    fillG.beginFill(C.gold); fillG.drawRect(BX + 190, y + i * 34 + 6, 1, 14); fillG.endFill();
     fillG.scale.set(0.001, 1);
     content.addChild(label, track, fillG);
-    CV.tween(fillG.scale, { x: 300 * s.value }, 900 + i * 150);
+    CV.tween(fillG.scale, { x: (BW - 190) * s.value }, 900 + i * 150);
   });
   y += 4 * 34 + 16;
 
@@ -65,8 +66,8 @@ CV.scenes.sheet = (view, app) => {
     y += 14;
   };
   const para = (text, size = 15, color = 0xe8f2f7, weight = '500') => {
-    const t = CV.makeText(text, size, color, { wrap: true, wrapWidth: pw - 100, weight, lineJoin: 'round' });
-    addAt(t, px + 44, y);
+    const t = CV.makeText(text, size, color, { wrap: true, wrapWidth: BW, weight, lineJoin: 'round' });
+    addAt(t, BX, y);
     y += t.height + 10;
   };
 
@@ -112,13 +113,13 @@ CV.scenes.sheet = (view, app) => {
 
   // честный блок
   section(CV.t('sheet.missing'), () => {
-    const t = CV.makeText(CV.t('sheet.missingText'), 14, 0xf2d7b0, { wrap: true, wrapWidth: pw - 100, weight: '500' });
+    const t = CV.makeText(CV.t('sheet.missingText'), 14, 0xf2d7b0, { wrap: true, wrapWidth: BW - 32, weight: '500' });
     const box = new PIXI.Graphics();
-    box.beginFill(0x8f2f27, 0.2); box.drawRoundedRect(px + 30, y - 8, pw - 60, t.height + 26, 10); box.endFill();
-    box.roundRect(px + 30, y - 8, pw - 60, t.height + 26, 10);
+    box.beginFill(0x8f2f27, 0.2); box.drawRoundedRect(BX - 14, y - 8, BW + 28, t.height + 26, 10); box.endFill();
+    box.roundRect(BX - 14, y - 8, BW + 28, t.height + 26, 10);
     box.stroke({ width: 1.5, color: C.brusnika, alpha: 0.8 });
     addAt(box, 0, 0);
-    addAt(t, px + 44, y);
+    addAt(t, BX, y);
     y += t.height + 30;
   });
 
@@ -126,31 +127,30 @@ CV.scenes.sheet = (view, app) => {
   section(CV.t('sheet.contacts'), () => {
     const c = CV.DATA.contacts;
     const phone = CV.makeText(c.phone, 17, 0xe8f2f7, { weight: '700' });
-    addAt(phone, px + 44, y); y += 30;
+    addAt(phone, BX, y); y += 30;
     const email = CV.makeText(c.email, 17, 0xe8f2f7, { weight: '700' });
-    addAt(email, px + 44, y); y += 30;
+    addAt(email, BX, y); y += 30;
     const gh = CV.makeText(c.github, 17, 0x9fd6b8, { weight: '700' });
     gh.eventMode = 'static'; gh.cursor = 'pointer';
     gh.on('pointertap', () => { CV.Sfx.tap(); window.open(c.gh, '_blank'); });
-    addAt(gh, px + 44, y); y += 34;
+    addAt(gh, BX, y); y += 34;
   });
 
   // PDF
   const bPdf = CV.makeButton(CV.t('sheet.dl'), 320, { height: 58, size: 19, onTap: () => { CV.Sfx.tap(); window.open(CV.DATA.contacts.pdf, '_blank'); } });
   addAt(bPdf, W() / 2 - 160, y + 6);
   y += 76;
-  const note = CV.makeText(CV.t('common.pdfNote'), 12, 0x9fb8c9, { align: 'center', wrap: true, wrapWidth: pw - 80 });
+  const note = CV.makeText(CV.t('common.pdfNote'), 12, 0x9fb8c9, { align: 'center', wrap: true, wrapWidth: pw - 220 });
   note.anchor.set(0.5);
   addAt(note, W() / 2, y + 4);
   y += 44;
 
   // подгоняем панель под контент
-  panel.clear();
-  const rebuilt = CV.makePanel(pw, y + 30, { radius: 22 });
+  const rebuilt = CV.makePanel(pw, y + 30, { forceWood: true });
   rebuilt.position.copyFrom(panel.position);
   content.addChildAt(rebuilt, content.getChildIndex(panel));
   content.removeChild(panel);
-  panel.destroy();
+  panel.destroy({ children: true });
 
   const contentH = y + 60;
   const back = CV.makeButton(CV.t('common.back'), 170, { height: 54, size: 19, onTap: () => { CV.Sfx.tap(); CV.Scenes.switchTo('map'); } });

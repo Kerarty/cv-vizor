@@ -10,7 +10,7 @@ CV.DATA = {
     { id: 's4', x: 320, y: 560, kind: 'loop', sprite: 'b-brick-house' },       // echoloop
     { id: 's5', x: 120, y: 760, kind: 'harbor' },                      // гавань мини-игр
     { id: 's6', x: 420, y: 880, kind: 'workshop', sprite: 'b-wood-house' },    // баланс-мастерская
-    { id: 's7', x: 360, y: 1090, kind: 'fort' },                       // форт vizor
+    { id: 's7', x: 360, y: 1090, kind: 'fort', sprite: 'b-fort' },     // форт vizor
   ],
 
   orders: [

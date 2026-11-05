@@ -37,31 +37,26 @@ CV.scenes.map = (view, app) => {
   const layers = new PIXI.Container();
   view.addChild(layers);
 
-  // ── дневной фон: небо, горы, снег ──
-  const bg = new PIXI.Graphics();
+  // ── дневной фон: настоящее небо и даль Park Zone, снег кодом ──
+  const bg = new PIXI.Container();
   const drawBg = () => {
-    bg.clear();
-    bg.beginFill(0xBFD5E1); bg.drawRect(0, 0, W(), H()); bg.endFill();
-    bg.beginFill(0xD3E3EC); bg.drawRect(0, 0, W(), H() * 0.35); bg.endFill();
-    // горы
-    bg.beginFill(0x9FB8C9);
-    bg.drawPolygon([-30, 330, 120, 170, 260, 330]);
-    bg.drawPolygon([180, 330, 380, 130, 560, 330]);
-    bg.drawPolygon([440, 330, 620, 180, 780, 330]);
-    bg.endFill();
-    bg.beginFill(0xffffff, 0.75);
-    bg.drawPolygon([104, 205, 120, 170, 138, 205]);
-    bg.drawPolygon([352, 172, 380, 130, 410, 172]);
-    bg.drawPolygon([596, 216, 620, 180, 646, 216]);
-    bg.endFill();
-    // снежное поле
-    bg.beginFill(0xE7F0F5); bg.drawRect(0, 320, W(), H() - 320); bg.endFill();
-    bg.beginFill(C.snow); bg.drawRect(0, 360, W(), H() - 360); bg.endFill();
-    bg.beginFill(0xf6fafc, 0.8);
+    bg.removeChildren().forEach(c => c.destroy({ children: true }));
+    const base = new PIXI.Graphics();
+    base.beginFill(0xBFD5E1); base.drawRect(0, 0, W(), H()); base.endFill();
+    bg.addChild(base);
+    const sky = CV.sprite('map-sky');
+    if (sky) { sky.width = W(); sky.height = 340; sky.position.set(0, 0); bg.addChild(sky); }
+    const treeline = CV.sprite('map-treeline-winter');
+    if (treeline) { treeline.width = W(); treeline.height = 150; treeline.position.set(0, 240); treeline.alpha = 0.9; bg.addChild(treeline); }
+    const snow = new PIXI.Graphics();
+    snow.beginFill(0xE7F0F5); snow.drawRect(0, 330, W(), H() - 330); snow.endFill();
+    snow.beginFill(C.snow); snow.drawRect(0, 356, W(), H() - 356); snow.endFill();
+    snow.beginFill(0xf6fafc, 0.8);
     for (let y = 400; y < H() + 60; y += 74)
       for (let x = ((y / 74) % 2) * 60 - 60; x < W() + 80; x += 150)
-        bg.ellipse(x + ((y * 13) % 40), y + ((x * 7) % 30), 88, 20);
-    bg.endFill();
+        snow.ellipse(x + ((y * 13) % 40), y + ((x * 7) % 30), 88, 20);
+    snow.endFill();
+    bg.addChild(snow);
   };
   drawBg();
   layers.addChild(bg);
@@ -82,20 +77,31 @@ CV.scenes.map = (view, app) => {
   road.alpha = 0.75;
   layers.addChild(road);
 
-  // ели
-  const pines = new PIXI.Container();
-  const pine = (x, y, s) => {
-    const g = new PIXI.Graphics();
-    g.beginFill(0x3d2606); g.drawRect(x - 3 * s, y, 6 * s, 12 * s); g.endFill();
-    for (let i = 0; i < 3; i++) {
-      const w = (44 - i * 10) * s, yy = y - i * 20 * s;
-      g.beginFill(C.taiga); g.drawPolygon([x, yy - 34 * s, x + w / 2, yy, x - w / 2, yy]); g.endFill();
-      g.beginFill(0xffffff, 0.85); g.drawPolygon([x, yy - 34 * s, x + w * 0.16, yy - 22 * s, x - w * 0.16, yy - 22 * s]); g.endFill();
-    }
-    pines.addChild(g);
+  // ── настоящие деревья и кусты (озимённые, Park Zone) ──
+  const flora = new PIXI.Container();
+  const addTree = (kind, x, y, h) => {
+    const t = CV.sprite('map-tree' + kind);
+    if (!t) return;
+    t.width = h * 0.9; t.height = h;
+    t.anchor.set(0.5, 0.95);
+    t.position.set(x, y);
+    flora.addChild(t);
   };
-  [[70, 380, 1], [660, 400, 1.15], [40, 640, 0.9], [680, 700, 1], [80, 1000, 1.1], [640, 1120, 0.95], [200, 1180, 0.9], [560, 980, 0.85]].forEach(a => pine(...a));
-  layers.addChild(pines);
+  const addBush = (kind, x, y, w) => {
+    const b = CV.sprite('map-bush' + kind);
+    if (!b) return;
+    b.width = w; b.height = w * 0.5;
+    b.anchor.set(0.5, 0.9);
+    b.position.set(x, y);
+    flora.addChild(b);
+  };
+  addTree(1, 70, 430, 150); addTree(2, 665, 450, 160); addTree(3, 42, 680, 120);
+  addTree(1, 688, 745, 140); addTree(2, 88, 1030, 150); addTree(3, 648, 1140, 120);
+  addTree(1, 215, 1200, 130); addTree(2, 568, 1000, 130);
+  addBush(1, 150, 480, 60); addBush(2, 602, 575, 54); addBush(3, 252, 735, 58);
+  addBush(1, 520, 1010, 56); addBush(2, 662, 860, 50); addBush(3, 96, 905, 52);
+  addBush(1, 300, 1262, 58); addBush(2, 478, 665, 52);
+  layers.addChild(flora);
 
   // ── станции ──
   const stationViews = new Map(); // id → {cont, fog, plate, open}
@@ -185,45 +191,42 @@ CV.scenes.map = (view, app) => {
   wShadow.beginFill(0x2e5d4b, 0.18); wShadow.drawEllipse(0, 22, 16, 6); wShadow.endFill();
   worker.addChildAt(wShadow, 0);
 
-  // ── HUD ──
+  // ── HUD: пилюля btn-long + настоящие иконки ──
   const hud = new PIXI.Container();
   layers.addChild(hud);
-  const hudPanel = CV.makePanel(W() - 24, 64, { radius: 16 });
-  hudPanel.position.set(12, 12);
-  hud.addChild(hudPanel);
+  const hudBg = CV.sprite('ui-btn-long');
+  hudBg.width = W() - 24; hudBg.height = 64;
+  hudBg.tint = 0xdfe9ee; // слегка приглушаем глянец под текст
+  hudBg.position.set(12, 12);
+  hud.addChild(hudBg);
 
-  const boltIcon = CV.makeIcon('bolt', 26, C.gold);
-  boltIcon.position.set(34, 28);
+  const boltIcon = CV.sprite('ui-energy');
+  if (boltIcon) { boltIcon.height = 34; boltIcon.width = 34 * 249 / 406; boltIcon.position.set(34, 27); }
   const energyT = CV.makeText('30', 22, C.ink, { weight: '800' });
-  energyT.anchor.set(0, 0.5); energyT.position.set(56, 44);
+  energyT.anchor.set(0, 0.5); energyT.position.set(70, 44);
   hud.addChild(boltIcon, energyT);
 
-  const attIcon = CV.makeIcon('coin', 24);
-  attIcon.position.set(150, 28);
+  const attIcon = CV.sprite('ui-clock');
+  if (attIcon) { attIcon.width = 26; attIcon.height = 26; attIcon.position.set(150, 31); }
   const attT = CV.makeText(CV.t('hud.attention', { s: 0 }), 15, C.ink, { weight: '700' });
-  attT.anchor.set(0, 0.5); attT.position.set(178, 44);
+  attT.anchor.set(0, 0.5); attT.position.set(180, 44);
   hud.addChild(attIcon, attT);
 
-  const ordersChip = CV.makeChip(CV.t('hud.orders') + ' ' + CV.t('hud.ordersDone', { n: CV.State.ordersCount }), { size: 16, fill: 0xf4e9d3 });
+  const ordersChip = CV.makeChip(CV.t('hud.orders') + ' ' + CV.t('hud.ordersDone', { n: CV.State.ordersCount }), { size: 15, dark: true });
   ordersChip.eventMode = 'static'; ordersChip.cursor = 'pointer';
   ordersChip.on('pointertap', () => { CV.Sfx.open(); toggleOrders(true); });
-  ordersChip.position.set(W() - 300, 24);
+  ordersChip.position.set(W() - 320, 26);
   hud.addChild(ordersChip);
 
   const bPdf = CV.makeIcon('pdf', 36);
   bPdf.eventMode = 'static'; bPdf.cursor = 'pointer';
-  bPdf.position.set(W() - 178, 24);
+  bPdf.position.set(W() - 190, 26);
   bPdf.on('pointertap', () => { CV.Sfx.tap(); window.open(CV.DATA.contacts.pdf, '_blank'); });
   hud.addChild(bPdf);
 
-  const bSheet = CV.makeButton(CV.t('sheet.title'), 120, { height: 44, size: 15, onTap: () => { CV.Sfx.open(); CV.Scenes.switchTo('sheet'); } });
-  bSheet.position.set(W() - 132, 22);
+  const bSheet = CV.makeButton(CV.t('sheet.title'), 122, { height: 46, size: 15, onTap: () => { CV.Sfx.open(); CV.Scenes.switchTo('sheet'); } });
+  bSheet.position.set(W() - 134, 21);
   hud.addChild(bSheet);
-
-  const bTuner = CV.makeButton('TUNER', 120, { height: 44, size: 15, onTap: () => { CV.Sfx.open(); CV.Scenes.switchTo('tuner'); } });
-  bTuner.position.set(W() - 262, 22);
-  bTuner.visible = CV.State.tunerOpen;
-  hud.addChild(bTuner);
 
   // ── энергия ──
   const energy = { v: CV.DATA.ENERGY_MAX, regenT: 0 };
@@ -272,20 +275,21 @@ CV.scenes.map = (view, app) => {
       if (t.startsWith('?')) break;
       facts.push(i);
     }
-    const cardW = Math.min(640, W() - 60), cardH = Math.min(118, (H() - 320) / facts.length - 18);
+    const cardW = Math.min(640, W() - 60), cardH = Math.min(150, (H() - 360) / facts.length - 14);
     const cards = [];
+    const padX = Math.round(cardW * 0.13) + 12;
     facts.forEach((fi, i) => {
       const card = new PIXI.Container();
-      card._finalY = 170 + i * (cardH + 18);
+      card._finalY = 175 + i * (cardH + 14);
       card.position.set((W() - cardW) / 2, card._finalY);
       card.visible = false;
       card.addChild(CV.makeCard(cardW, cardH));
-      const t = CV.makeText(CV.t('station.' + st.id + '.facts.' + fi + '.t'), 19, C.ink, { weight: '800', wrap: true, wrapWidth: cardW - 210 });
-      t.position.set(20, 14);
-      const x = CV.makeText(CV.t('station.' + st.id + '.facts.' + fi + '.x'), 15, 0x4a5a64, { wrap: true, wrapWidth: cardW - 210, weight: '500' });
-      x.position.set(20, 44);
-      const chip = CV.makeChip(CV.t('station.' + st.id + '.facts.' + fi + '.c'), { size: 13, fill: 0xE8A93D22, line: C.goldDark });
-      chip.position.set(cardW - chip.w - 18, cardH / 2 - chip.h / 2);
+      const t = CV.makeText(CV.t('station.' + st.id + '.facts.' + fi + '.t'), 19, C.ink, { weight: '800', wrap: true, wrapWidth: cardW - padX - 190 });
+      t.position.set(padX, cardH * 0.13);
+      const x = CV.makeText(CV.t('station.' + st.id + '.facts.' + fi + '.x'), 14, 0x44545e, { wrap: true, wrapWidth: cardW - padX - 190, weight: '500' });
+      x.position.set(padX, cardH * 0.13 + 30);
+      const chip = CV.makeChip(CV.t('station.' + st.id + '.facts.' + fi + '.c'), { size: 13, tint: 0xfff3d6 });
+      chip.position.set(cardW - chip.w - padX * 0.6, cardH / 2 - chip.h / 2);
       card.addChild(t, x, chip);
       factLayer.addChild(card);
       cards.push(card);
@@ -409,71 +413,79 @@ CV.scenes.map = (view, app) => {
     ordersLayer.addChild(dim);
 
     const panelW = Math.min(660, W() - 40);
-    const panelH = Math.min(H() - 160, 130 + CV.DATA.orders.length * 150);
+    const panelH = Math.min(H() - 120, 130 + CV.DATA.orders.length * 150);
     const panel = CV.makePanel(panelW, panelH);
-    panel.position.set((W() - panelW) / 2, 120);
+    panel.position.set((W() - panelW) / 2, 80);
     ordersLayer.addChild(panel);
 
-    const title = CV.makeText(CV.t('hud.orders') + ' — ' + CV.t('hud.ordersDone', { n: CV.State.ordersCount }), 26, C.paper, { display: true });
+    const title = CV.makeText(CV.t('hud.orders') + ' — ' + CV.t('hud.ordersDone', { n: CV.State.ordersCount }), 26, C.ink, { display: true });
     title.anchor.set(0.5);
-    title.position.set(W() / 2, 120 + 42);
+    title.position.set(W() / 2, 80 + 128);
     ordersLayer.addChild(title);
 
     CV.DATA.orders.forEach((o, i) => {
-      const y = 120 + 84 + i * 148;
+      const y = 80 + 168 + i * 146;
       const done = CV.State.ordersDone.has(o.id);
-      const cardW = panelW - 44, cardH = 130;
+      const cardW = panelW - 244, cardH = 132;
       const card = new PIXI.Container();
-      card.position.set((W() - cardW) / 2, y);
+      card.position.set((W() - cardW) / 2 + 62, y);
+      const padX = Math.round(cardW * 0.08) + 8;
       card.addChild(CV.makeCard(cardW, cardH));
-      const nameT = CV.makeText((i + 1) + '. ' + CV.t('order.' + o.id + '.name'), 19, done ? 0x3f8f5f : C.ink, { weight: '800' });
-      nameT.position.set(18, 12);
-      const lineT = CV.makeText('«' + CV.t('order.' + o.id + '.line') + '»', 14, 0x4a5a64, { wrap: true, wrapWidth: cardW - 190, weight: '500' });
-      lineT.position.set(18, 40);
+      const nameT = CV.makeText((i + 1) + '. ' + CV.t('order.' + o.id + '.name'), 18, done ? 0x2f7d4f : C.ink, { weight: '800' });
+      nameT.position.set(padX, 10);
+      const lineT = CV.makeText('«' + CV.t('order.' + o.id + '.line') + '»', 12, 0x44545e, { wrap: true, wrapWidth: cardW - padX * 2, weight: '500' });
+      lineT.position.set(padX, 36);
       // чипы ресурсов
       const needs = [...new Set(o.needs)];
-      let cx = 18;
-      const chips = [];
+      let cx = padX;
       needs.forEach(sid => {
         const lit = CV.State.opened.has(sid);
-        const chip = CV.makeChip(CV.t('station.' + sid + '.name'), { size: 12, fill: lit ? 0x3f8f5f22 : 0x00000010, line: lit ? 0x3f8f5f : 0x9aa7af, color: lit ? 0x2c5c44 : 0x5a6870 });
-        chip.position.set(cx, 66);
+        const chip = CV.makeChip(CV.t('station.' + sid + '.name'), { size: 10, tint: lit ? 0xd9f2e4 : 0xe8edf0, color: lit ? 0x2c5c44 : 0x5a6870 });
+        chip.position.set(cx, 62);
         card.addChild(chip);
-        cx += chip.w + 8;
+        cx += chip.w + 6;
       });
       card.addChild(nameT, lineT);
 
       if (done) {
-        const star = CV.sprite('star');
-        if (star) { star.width = 34; star.height = 34; star.position.set(cardW - 52, 12); card.addChild(star); }
-        else { const ok = CV.makeIcon('check', 30, 0x3f8f5f); ok.position.set(cardW - 50, 16); card.addChild(ok); }
-        const rT = CV.makeText('→ ' + CV.t('order.' + o.id + '.reward'), 14, 0x3f8f5f, { weight: '700' });
-        rT.position.set(18, 96);
+        const star = CV.sprite('ui-star');
+        if (star) { star.width = 34; star.height = 32; star.position.set(cardW - 48, 10); card.addChild(star); }
+        else { const ok = CV.makeIcon('check', 30, 0x3f8f5f); ok.position.set(cardW - 44, 14); card.addChild(ok); }
+        const rT = CV.makeText('→ ' + CV.t('order.' + o.id + '.reward'), 13, 0x2f7d4f, { weight: '700' });
+        rT.position.set(padX, 100);
         card.addChild(rT);
       } else {
         const can = needs.every(sid => CV.State.opened.has(sid));
-        const b = CV.makeButton(can ? CV.t('common.yes') : CV.t('order.needFacts'), 190, {
-          height: 44, size: 14, danger: !can,
-          onTap: () => { if (can) completeOrder(o); else CV.Sfx.fail(); },
+        const b = CV.makeButton(CV.t('common.yes'), 150, {
+          height: 48, size: 15,
+          onTap: () => { if (can) completeOrder(o); else { CV.Sfx.fail(); toast(CV.t('order.needFacts')); } },
         });
-        b.position.set(cardW - 210, 74);
+        b.position.set(cardW - 166, 42);
+        if (!can) b.alpha = 0.45;
         card.addChild(b);
-        const rT = CV.makeText('→ ' + CV.t('order.' + o.id + '.reward'), 13, C.goldDark, { weight: '700' });
-        rT.position.set(18, 96);
+        const rT = CV.makeText('→ ' + CV.t('order.' + o.id + '.reward'), 12, C.goldDark, { weight: '700' });
+        rT.position.set(padX, 100);
         card.addChild(rT);
       }
       ordersLayer.addChild(card);
     });
 
     const closeB = CV.makeButton(CV.t('common.close'), 180, { height: 52, size: 18, onTap: () => toggleOrders(false) });
-    closeB.position.set(W() / 2 - 90, H() - 150);
+    closeB.position.set(W() / 2 - 90, 80 + panelH - 60);
     ordersLayer.addChild(closeB);
   };
 
   const completeOrder = (o) => {
     CV.State.ordersDone.add(o.id);
-    if (o.opens === 'tuner') { CV.State.tunerOpen = true; bTuner.visible = true; }
-    else CV.State.blocksOpen.add(o.opens);
+    if (o.opens === 'tuner') {
+      CV.State.tunerOpen = true;
+      // награда — живой тюнер: открываем сразу
+      toggleOrders(false);
+      CV.Sfx.done();
+      CV.Scenes.switchTo('tuner');
+      return;
+    }
+    CV.State.blocksOpen.add(o.opens);
     CV.State.save();
     CV.Sfx.done();
     ordersChip.label.text = CV.t('hud.orders') + ' ' + CV.t('hud.ordersDone', { n: CV.State.ordersCount });

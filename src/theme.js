@@ -48,80 +48,105 @@ window.CV = window.CV || {};
     return t;
   };
 
-  // ── деревянная панель 9-slice-подобная (рисуется кодом) ──
+  // ── панель: большой NineSlice из рамки Island GUI, малая — спрайт ──
   CV.makePanel = (w, h, opts = {}) => {
-    const g = new PIXI.Graphics();
-    const r = opts.radius != null ? opts.radius : 18;
-    const base = opts.fill || C.wood, dark = opts.border || C.woodDark, light = opts.top || C.woodLight;
-    g.beginFill(dark, 0.55); g.drawRoundedRect(4, 8, w, h, r); g.endFill(); // тень
-    g.beginFill(dark); g.drawRoundedRect(0, 0, w, h, r); g.endFill();       // рама
-    g.beginFill(base); g.drawRoundedRect(5, 5, w - 10, h - 10, r - 4); g.endFill();
-    g.beginFill(light, 0.28); g.drawRoundedRect(5, 5, w - 10, (h - 10) * 0.42, r - 4); g.endFill();
-    // гвоздики по углам
-    g.beginFill(C.goldDark, 0.9);
-    for (const [nx, ny] of [[16, 16], [w - 16, 16], [16, h - 16], [w - 16, h - 16]]) {
-      g.drawCircle(nx, ny, 3.2);
+    if (opts.forceWood) {
+      // тёмное дерево — для длинных документов (Лист кандидата)
+      const g = new PIXI.Graphics();
+      const r = 22;
+      g.beginFill(0x3d2606, 0.55); g.drawRoundedRect(6, 10, w, h, r); g.endFill();
+      g.beginFill(C.woodDark); g.drawRoundedRect(0, 0, w, h, r); g.endFill();
+      g.beginFill(C.wood); g.drawRoundedRect(6, 6, w - 12, h - 12, r - 4); g.endFill();
+      g.beginFill(C.woodLight, 0.22); g.drawRoundedRect(6, 6, w - 12, Math.min(140, h * 0.2), r - 4); g.endFill();
+      g.beginFill(C.goldDark, 0.85);
+      for (const [nx, ny] of [[22, 22], [w - 22, 22], [22, h - 22], [w - 22, h - 22]]) g.drawCircle(nx, ny, 3.6);
+      g.endFill();
+      const wrap = new PIXI.Container();
+      wrap.addChild(g);
+      wrap.content = { x: 44, y: 30 };
+      return wrap;
     }
-    g.endFill();
-    return g;
+    const nine = CV.ninePanel(w, h, opts);
+    if (nine) {
+      const wrap = new PIXI.Container();
+      const sh = new PIXI.Graphics();
+      sh.beginFill(0x0a141c, 0.35); sh.drawRoundedRect(6, 10, w, h, 24); sh.endFill();
+      wrap.addChild(sh, nine);
+      wrap.content = { x: 112, y: 108 }; // внутрь рамки
+      return wrap;
+    }
+    // маленькая панель: спрайт-рамка + светлая подложка для текста
+    const wrap = new PIXI.Container();
+    const sh = new PIXI.Graphics();
+    sh.beginFill(0x0a141c, 0.3); sh.drawRoundedRect(4, 7, w, h, 18); sh.endFill();
+    wrap.addChild(sh);
+    const frame = CV.sprite(opts.art || 'ui-panel');
+    if (frame) {
+      frame.width = w; frame.height = h;
+      wrap.addChild(frame);
+      const inner = new PIXI.Graphics();
+      inner.beginFill(opts.inner || 0xf4f8fb, 0.94);
+      inner.drawRoundedRect(w * 0.13, h * 0.15, w * 0.74, h * 0.7, 14);
+      inner.endFill();
+      wrap.addChild(inner);
+      wrap.content = { x: w * 0.13 + 12, y: h * 0.15 + 8 };
+    } else {
+      const g = new PIXI.Graphics();
+      g.beginFill(C.woodDark); g.drawRoundedRect(0, 0, w, h, 18); g.endFill();
+      g.beginFill(C.wood); g.drawRoundedRect(5, 5, w - 10, h - 10, 14); g.endFill();
+      wrap.addChild(g);
+      wrap.content = { x: 20, y: 18 };
+    }
+    return wrap;
   };
 
-  // ── пергамент-карточка ──
-  CV.makeCard = (w, h, opts = {}) => {
-    const g = new PIXI.Graphics();
-    g.beginFill(0x8a744f, 0.4); g.drawRoundedRect(3, 7, w, h, 14); g.endFill();
-    g.beginFill(C.paperDark); g.drawRoundedRect(0, 0, w, h, 14); g.endFill();
-    g.beginFill(C.paper); g.drawRoundedRect(4, 4, w - 8, h - 8, 11); g.endFill();
-    // волокна
-    for (let i = 1; i < 4; i++) {
-      g.moveTo(14, h * i / 4 + 6); g.lineTo(w - 14, h * i / 4 + 2);
-    }
-    g.stroke({ width: 1, color: C.paperDark, alpha: 0.5 });
-    return g;
-  };
+  // ── карточка факта: маленькая панель ──
+  CV.makeCard = (w, h, opts = {}) => CV.makePanel(w, h, { ...opts, art: 'ui-panel' });
 
-  // ── золотая кнопка ──
+  // ── кнопка: пилюля Island GUI, состояния normal/down ──
   CV.makeButton = (label, w, opts = {}) => {
     const h = opts.height || 64;
     const c = new PIXI.Container();
-    const g = new PIXI.Graphics();
-    const draw = (pressed) => {
-      g.clear();
-      const dy = pressed ? 2 : 0;
-      g.beginFill(C.goldDark, 0.5); g.drawRoundedRect(3, 7 + dy, w, h - dy, h / 2 - 2); g.endFill();
-      g.beginFill(opts.danger ? 0x8f2f27 : C.goldDark); g.drawRoundedRect(0, dy, w, h - dy, (h - dy) / 2); g.endFill();
-      g.beginFill(opts.danger ? C.brusnika : C.gold); g.drawRoundedRect(0, dy, w, h - dy - 6, (h - dy - 6) / 2); g.endFill();
-      g.beginFill(0xffffff, 0.35); g.drawRoundedRect(w * 0.12, dy + 5, w * 0.76, (h - dy) * 0.32, (h - dy) * 0.16); g.endFill();
-    };
-    draw(false);
-    const t = CV.makeText(label, opts.size || 24, 0x3d2606, { weight: '800', ls: 1 });
+    const kind = opts.size && opts.size <= 16 ? 'small' : (h >= 68 ? 'long' : 'medium');
+    const base = CV.sprite('ui-btn-' + kind);
+    const down = CV.sprite('ui-btn-' + kind + '-down');
+    const bg = base || new PIXI.Graphics();
+    if (!base) { // фолбэк — код-кнопка
+      bg.beginFill(C.gold); bg.drawRoundedRect(0, 0, w, h, h / 2); bg.endFill();
+    }
+    bg.width = w; bg.height = h;
+    const t = CV.makeText(label, opts.size || 24, 0xffffff, { weight: '800', ls: 1, shadow: true, shadowDistance: 2 });
     t.anchor.set(0.5); t.position.set(w / 2, h / 2 - 2);
-    c.addChild(g, t);
+    c.addChild(bg, t);
     c.eventMode = 'static'; c.cursor = 'pointer';
-    const down = () => { draw(true); t.y = h / 2; };
-    const up = () => { draw(false); t.y = h / 2 - 2; };
-    c.on('pointerdown', down); c.on('pointerup', up); c.on('pointerupoutside', up);
+    const press = () => { if (down) { c.removeChild(bg); c.addChildAt(down, 0); down.width = w; down.height = h; } t.y = h / 2 + 2; };
+    const unpress = () => { if (down) { c.removeChild(down); c.addChildAt(bg, 0); } t.y = h / 2 - 2; };
+    c.on('pointerdown', press); c.on('pointerup', unpress); c.on('pointerupoutside', unpress);
     if (opts.onTap) c.on('pointertap', opts.onTap);
     c.label = t;
     return c;
   };
 
-  // ── чип-бейдж ──
-  // цвет можно передать как 0xRRGGBB или 0xRRGGBBAA (8-значный разворачиваем в цвет+альфу)
-  const splitAlpha = n => (n > 0xFFFFFF ? { c: n >>> 8, a: (n & 0xFF) / 255 } : { c: n, a: 1 });
+  // ── чип-бейдж: пилюля btn-small с тонировкой ──
   CV.makeChip = (label, opts = {}) => {
     const c = new PIXI.Container();
     const pad = 12;
-    const t = CV.makeText(label, opts.size || 14, opts.color || C.ink, { weight: '700' });
-    const w = t.width + pad * 2, h = (opts.size || 14) + 14;
-    const g = new PIXI.Graphics();
-    const f = splitAlpha(opts.fill || 0x000000);
-    g.beginFill(f.c, f.a); g.drawRoundedRect(0, 0, w, h, h / 2); g.endFill();
-    const l = splitAlpha(opts.line || C.goldDark);
-    g.roundRect(0, 0, w, h, h / 2);
-    g.stroke({ width: 1.5, color: l.c, alpha: l.a * 0.8 });
+    const dark = opts.dark;
+    const t = CV.makeText(label, opts.size || 14, opts.color || (dark ? 0xffffff : C.ink), { weight: '700' });
+    const w = t.width + pad * 2, h = (opts.size || 14) + 16;
+    const bg = CV.sprite('ui-btn-small');
+    if (bg) {
+      bg.width = w; bg.height = h;
+      if (dark) bg.tint = 0x3a4a55;
+      else if (opts.tint) bg.tint = opts.tint;
+      c.addChild(bg);
+    } else {
+      const g = new PIXI.Graphics();
+      g.beginFill(dark ? 0x3a4a55 : 0xf2f7fa); g.drawRoundedRect(0, 0, w, h, h / 2); g.endFill();
+      c.addChild(g);
+    }
     t.position.set(pad, h / 2 - 1); t.anchor.set(0, 0.5);
-    c.addChild(g, t);
+    c.addChild(t);
     c.w = w; c.h = h;
     c.label = t;
     return c;
@@ -258,5 +283,15 @@ window.CV = window.CV || {};
   CV.sprite = (name) => {
     const tex = texCache.get(name);
     return tex ? new PIXI.Sprite(tex) : null;
+  };
+  CV.hasArt = (name) => texCache.has(name);
+
+  // 9-slice для больших панелей (рамка ~100px в отображаемых пикселях)
+  CV.ninePanel = (w, h, opts = {}) => {
+    const tex = texCache.get(opts.art || 'ui-panel');
+    if (!tex || h < 560) return null; // маленькие панели — спрайтом
+    return new PIXI.NineSliceSprite({
+      texture: tex, left: 100, top: 100, right: 100, bottom: 100, width: w, height: h,
+    });
   };
 })();

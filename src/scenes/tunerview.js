@@ -45,11 +45,18 @@ CV.scenes.tuner = (view, app) => {
     tg.beginFill(0x0e1a23); tg.drawRoundedRect(0, 0, sliderW - 80, 12, 6); tg.endFill();
     tg.beginFill(0x335061, 0.53); tg.drawRoundedRect(0, 0, sliderW - 80, 12, 6); tg.endFill();
     const fillG = new PIXI.Graphics();
-    const knob = new PIXI.Graphics();
-    knob.beginFill(C.gold); knob.drawCircle(0, 6, 13); knob.endFill();
-    knob.beginFill(C.goldLight, 0.9); knob.drawCircle(-3, 3, 4); knob.endFill();
-    knob.circle(0, 6, 13);
-    knob.stroke({ width: 2, color: C.goldDark });
+    const knob = CV.sprite('ui-btn-round');
+    if (knob) {
+      knob.width = 34; knob.height = 34;
+      knob.anchor.set(0.5, 0.5);
+      knob.position.set(0, 6);
+    } else {
+      // фолбэк: круглая код-кнопка
+      const k = new PIXI.Graphics();
+      k.beginFill(C.gold); k.drawCircle(0, 6, 15); k.endFill();
+      k.circle(0, 6, 15); k.stroke({ width: 2, color: C.goldDark });
+      return k;
+    }
     track.addChild(tg, fillG, knob);
     track.eventMode = 'static'; track.cursor = 'pointer';
     const unitT = CV.makeText(CV.t(def.unit), 12, 0x9fb8c9);

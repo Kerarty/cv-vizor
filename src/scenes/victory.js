@@ -8,16 +8,21 @@ CV.scenes.victory = (view, app) => {
   bg.beginFill(C.desk); bg.drawRect(0, 0, W(), H()); bg.endFill();
   view.addChild(bg);
 
-  const pool = CV.makeLampPool(app, W() / 2, 520, 440);
+  const pool = CV.makeLampPool(app, W() / 2, H() / 2 - 60, 440);
   view.addChild(pool);
   const dust = CV.makeDust(app, 26);
   view.addChild(dust);
+
+  // группа контента — вертикально центрируется на любом экране
+  const G = new PIXI.Container();
+  G.position.y = Math.round((H() - 1070) / 2) - 130;
+  view.addChild(G);
 
   // эпилог: лист дела
   const pw = 620, ph = 560;
   const paper = CV.makePanel(pw, ph);
   paper.position.set((W() - pw) / 2, 170);
-  view.addChild(paper);
+  G.addChild(paper);
 
   const caseNo = CV.makeText(CV.t('victory.caseNo'), 12, C.ink60, { ls: 6, upper: true });
   caseNo.anchor.set(0.5, 0);
@@ -28,7 +33,7 @@ CV.scenes.victory = (view, app) => {
   const sub = CV.makeText(CV.t('victory.sub'), 13, C.ink60);
   sub.anchor.set(0.5, 0);
   sub.position.set(W() / 2, 328);
-  view.addChild(caseNo, title, sub);
+  G.addChild(caseNo, title, sub);
 
   const s0 = performance.now() - (window.__sessionStart || performance.now());
   const stats = [
@@ -42,22 +47,23 @@ CV.scenes.victory = (view, app) => {
   const thanks = CV.makeText(CV.t('victory.thanks'), 12, C.ink60, { align: 'center', wrap: true, wrapWidth: 480, ls: 0 });
   thanks.anchor.set(0.5, 0);
   thanks.position.set(W() / 2, 428);
-  view.addChild(statsT, thanks);
+  G.addChild(statsT, thanks);
 
-  // линии для подписи
+  // линии для подписи — внутри листа, независимо от ширины стола
   const rules = new PIXI.Graphics();
   rules.setStrokeStyle({ width: 1, color: C.ink, alpha: 0.35 });
-  rules.moveTo(140, 560); rules.lineTo(580, 560);
-  rules.moveTo(140, 610); rules.lineTo(580, 610);
+  rules.moveTo(90, 560); rules.lineTo(530, 560);
+  rules.moveTo(90, 610); rules.lineTo(530, 610);
   rules.stroke();
-  view.addChild(rules);
+  rules.position.set((W() - 620) / 2, 0);
+  G.addChild(rules);
 
   // штамп «ГОДЕН К НАЙМУ» — влётовский шлепок
   const stamp = CV.makeStamp(CV.t('victory.stamp'), { size: 30, thick: 5, padX: 24, padY: 12, rotation: -6 * Math.PI / 180 });
   stamp.position.set(W() / 2 - 20, 586);
   stamp.visible = false;
   stamp.scale.set(2.6);
-  view.addChild(stamp);
+  G.addChild(stamp);
   setTimeout(() => { CV.Sfx.done(); CV.stampSlam(stamp); }, 700);
 
   const bPdf = CV.makeButton(CV.t('sheet.dl'), 340, { height: 60, size: 13, red: true, onTap: () => { CV.Sfx.tap(); window.open(CV.DATA.contacts.pdf, '_blank'); } });
@@ -68,7 +74,7 @@ CV.scenes.victory = (view, app) => {
   bGh.eventMode = 'static'; bGh.cursor = 'pointer';
   bGh.on('pointertap', () => { CV.Sfx.tap(); window.open(CV.DATA.contacts.gh, '_blank'); });
   bGh.position.set(W() / 2 - bGh.w / 2, 938);
-  view.addChild(bPdf, bMail, bGh);
+  G.addChild(bPdf, bMail, bGh);
 
   const back = CV.makeButton(CV.t('common.back'), 170, { height: 48, size: 12, ghost: true, onTap: () => { CV.Sfx.tap(); CV.Scenes.switchTo('map'); } });
   back.position.set(W() / 2 - 85, H() - 66);

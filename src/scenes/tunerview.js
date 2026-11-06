@@ -10,10 +10,15 @@ CV.scenes.tuner = (view, app) => {
   bg.beginFill(C.desk); bg.drawRect(0, 0, W(), H()); bg.endFill();
   view.addChild(bg);
 
+  // группа контента — вертикально центрируется на любом экране
+  const G = new PIXI.Container();
+  G.position.y = Math.round((H() - 1240) / 2) - 24;
+  view.addChild(G);
+
   // расчётный лист
   const panel = CV.makePanel(660, 1130);
   panel.position.set((W() - 660) / 2, 24);
-  view.addChild(panel);
+  G.addChild(panel);
 
   const title = CV.makeText(CV.t('tuner.title'), 30, C.ink, { head: true, weight: '700', upper: true });
   title.anchor.set(0.5, 0); title.position.set(W() / 2, 64);
@@ -23,11 +28,11 @@ CV.scenes.tuner = (view, app) => {
   const note = CV.makeText(CV.t('tuner.cohortNote'), 10.5, C.ink40, { align: 'center' });
   note.anchor.set(0.5, 0);
   note.position.set(W() / 2, 132);
-  view.addChild(title, intro, note);
+  G.addChild(title, intro, note);
 
   // ── слайдеры: форма на бумаге ──
   const sliders = new PIXI.Container();
-  view.addChild(sliders);
+  G.addChild(sliders);
   const sliderDefs = [
     { key: 'T', label: 'tuner.dur', unit: 'tuner.days', min: 3, max: 21, step: 1, fmt: v => v },
     { key: 'B', label: 'tuner.budget', unit: 'tuner.pts', min: 4000, max: 40000, step: 500, fmt: v => v.toLocaleString('ru-RU') },
@@ -134,11 +139,11 @@ CV.scenes.tuner = (view, app) => {
   // ── график: миллировка ──
   const chartCard = CV.makeCard(560, 280);
   chartCard.position.set((W() - 560) / 2, sTop + 4);
-  view.addChild(chartCard);
+  G.addChild(chartCard);
   const chartG = new PIXI.Graphics();
   const chartW = 560, chartH = 280;
   chartG.position.set((W() - chartW) / 2, sTop + 4);
-  view.addChild(chartG);
+  G.addChild(chartG);
 
   const drawChart = () => {
     const g = chartG;
@@ -180,12 +185,12 @@ CV.scenes.tuner = (view, app) => {
     legend.addChild(item);
   });
   legend.position.set((W() - chartW) / 2 + 46, sTop + 4 + chartH + 12);
-  view.addChild(legend);
+  G.addChild(legend);
   sTop += chartH + 56;
 
   // ── проверки ──
   const checksC = new PIXI.Container();
-  view.addChild(checksC);
+  G.addChild(checksC);
   const checkRows = [];
   ['c1', 'c2', 'c3', 'c4', 'c5'].forEach((cid, i) => {
     const row = new PIXI.Container();
@@ -203,11 +208,11 @@ CV.scenes.tuner = (view, app) => {
   const verdictT = CV.makeText('', 22, C.stamp, { weight: '700', upper: true, ls: 2 });
   const verdictSub = CV.makeText('', 12.5, C.ink60, { wrap: true, wrapWidth: 540, align: 'center', ls: 0 });
   verdictT.anchor.set(0.5); verdictSub.anchor.set(0.5);
-  view.addChild(verdictT, verdictSub);
+  G.addChild(verdictT, verdictSub);
 
   const back = CV.makeButton(CV.t('common.back'), 170, { height: 50, size: 13, ghost: true, onTap: () => { CV.Sfx.tap(); CV.Scenes.switchTo('map'); } });
   back.position.set(W() / 2 - 85, 24 + 1130 + 14);
-  view.addChild(back);
+  G.addChild(back);
 
   const redraw = () => {
     result = CV.Tuner.compute(params);

@@ -3476,7 +3476,7 @@ CV.scenes.title = (view, app) => {
   const ui = new PIXI.Container();
   layers.addChild(ui);
 
-  const fw = 624, fh = 806, fx = (W() - fw) / 2, fy = 208;
+  const fw = 624, fh = 806, fx = (W() - fw) / 2, fy = Math.round((H() - fh) / 2);
   const folder = CV.makePanel(fw, fh);
   folder.position.set(fx, fy);
   ui.addChild(folder);
@@ -3632,9 +3632,11 @@ CV.scenes.map = (view, app) => {
   bg.beginFill(C.desk); bg.drawRect(0, 0, W(), H()); bg.endFill();
   layers.addChild(bg);
 
-  // ── лист дела ──
-  const sheet = CV.makePanel(668, 1148, { inner: false });
-  sheet.position.set((W() - 668) / 2, 84);
+  // ── лист дела: во всю ширину стола, по вертикали между HUD и низом ──
+  const sheetW = Math.max(668, W() - 52);
+  const sheet = CV.makePanel(sheetW, 1148, { inner: false });
+  const sheetY = Math.round(56 + (H() - 56 - 1148) / 2);
+  sheet.position.set((W() - sheetW) / 2, sheetY);
   layers.addChild(sheet);
 
   // водяной знак «карта дела»
@@ -3642,6 +3644,11 @@ CV.scenes.map = (view, app) => {
   wm.alpha = 0.5;
   wm.position.set(sheet.x + 30, sheet.y + 22);
   layers.addChild(wm);
+
+  // поле карты: контент в координатах 720, центрируется на широком столе
+  const FIELD = new PIXI.Container();
+  FIELD.position.set((W() - 720) / 2, sheetY - 84);
+  layers.addChild(FIELD);
 
   // маршрут: пунктир чернилами
   const road = new PIXI.Graphics();
@@ -3657,7 +3664,7 @@ CV.scenes.map = (view, app) => {
     }
   }
   road.stroke();
-  layers.addChild(road);
+  FIELD.addChild(road);
 
   // ── участки ──
   const TW = 168, TH = 56;
@@ -3708,7 +3715,7 @@ CV.scenes.map = (view, app) => {
     cont.on('pointerover', () => { if (!CV.State.opened.has(st.id)) cont.alpha = 0.86; });
     cont.on('pointerout', () => { cont.alpha = 1; });
     cont.on('pointertap', () => tapStation(st));
-    layers.addChild(cont);
+    FIELD.addChild(cont);
     stationViews.set(st.id, { cont, st });
   }
 
@@ -3725,8 +3732,9 @@ CV.scenes.map = (view, app) => {
     c.addChild(ring, q);
     c.position.set(n.x, n.y);
     c.eventMode = 'static'; c.cursor = 'pointer';
+    c.hitArea = new PIXI.Circle(0, 0, 28); // крупная тач-цель
     c.on('pointertap', () => collectClue(n.id, c));
-    layers.addChild(c);
+    FIELD.addChild(c);
     clueViews.set(n.id, c);
   }
 
@@ -3740,7 +3748,7 @@ CV.scenes.map = (view, app) => {
   worker.addChild(pin, hereT);
   worker.position.set(190, 380);
   worker.zIndex = 50;
-  layers.addChild(worker);
+  FIELD.addChild(worker);
   layers.sortableChildren = true;
 
   // ── HUD: служебная полоса дела ──
@@ -3765,20 +3773,20 @@ CV.scenes.map = (view, app) => {
   attT.anchor.set(0, 0.5); attT.position.set(230, 28);
   hud.addChild(attT);
 
-  let ordersChip = CV.makeChip(CV.t('hud.orders') + ' ' + CV.t('hud.ordersDone', { n: CV.State.ordersCount }), { ghost: true, size: 11, upper: true, padX: 12 });
+  let ordersChip = CV.makeChip(CV.t('hud.orders') + ' ' + CV.t('hud.ordersDone', { n: CV.State.ordersCount }), { ghost: true, size: 12, upper: true, padX: 12 });
   ordersChip.eventMode = 'static'; ordersChip.cursor = 'pointer';
   ordersChip.on('pointertap', () => { CV.Sfx.open(); toggleOrders(true); });
-  ordersChip.position.set(W() - 340, 15);
+  ordersChip.position.set(W() - 356, 14);
   hud.addChild(ordersChip);
 
-  const bPdf = CV.makeIcon('pdf', 26, C.paper);
+  const bPdf = CV.makeIcon('pdf', 30, C.paper);
   bPdf.eventMode = 'static'; bPdf.cursor = 'pointer';
-  bPdf.position.set(W() - 224, 15);
+  bPdf.position.set(W() - 232, 13);
   bPdf.on('pointertap', () => { CV.Sfx.tap(); window.open(CV.DATA.contacts.pdf, '_blank'); });
   hud.addChild(bPdf);
 
-  const bFile = CV.makeButton(CV.t('hud.file'), 152, { height: 34, size: 11, ghost: true, onTap: () => { CV.Sfx.open(); CV.Scenes.switchTo('sheet'); } });
-  bFile.position.set(W() - 178, 11);
+  const bFile = CV.makeButton(CV.t('hud.file'), 168, { height: 40, size: 12, ghost: true, onTap: () => { CV.Sfx.open(); CV.Scenes.switchTo('sheet'); } });
+  bFile.position.set(W() - 192, 8);
   hud.addChild(bFile);
 
   // ── энергия ──
@@ -3894,13 +3902,13 @@ CV.scenes.map = (view, app) => {
     const idx = sv.cont.parent.getChildIndex(sv.cont);
     const fresh = buildTile(st, true);
     fresh.position.copyFrom(sv.cont.position);
-    layers.addChildAt(fresh, idx);
+    FIELD.addChildAt(fresh, idx);
     sv.cont.destroy({ children: true });
     sv.cont = fresh;
     const slam = CV.makeStamp(CV.t('map.openStamp'), { size: 16, thick: 4, padX: 14, padY: 6, rotation: -8 * Math.PI / 180 });
     slam.position.set(st.x, st.y);
     slam.visible = false;
-    layers.addChild(slam);
+    FIELD.addChild(slam);
     await CV.stampSlam(slam);
     CV.Sfx.done();
     toast('✓ ' + CV.t('station.' + st.id + '.name'));
@@ -4044,7 +4052,7 @@ CV.scenes.map = (view, app) => {
     CV.State.save();
     CV.Sfx.done();
     // пересобираем чип: число депеш изменилось
-    const rebuilt = CV.makeChip(CV.t('hud.orders') + ' ' + CV.t('hud.ordersDone', { n: CV.State.ordersCount }), { ghost: true, size: 11, upper: true, padX: 12 });
+    const rebuilt = CV.makeChip(CV.t('hud.orders') + ' ' + CV.t('hud.ordersDone', { n: CV.State.ordersCount }), { ghost: true, size: 12, upper: true, padX: 12 });
     rebuilt.eventMode = 'static'; rebuilt.cursor = 'pointer';
     rebuilt.on('pointertap', () => { CV.Sfx.open(); toggleOrders(true); });
     rebuilt.position.copyFrom(ordersChip.position);
@@ -4100,10 +4108,15 @@ CV.scenes.tuner = (view, app) => {
   bg.beginFill(C.desk); bg.drawRect(0, 0, W(), H()); bg.endFill();
   view.addChild(bg);
 
+  // группа контента — вертикально центрируется на любом экране
+  const G = new PIXI.Container();
+  G.position.y = Math.round((H() - 1240) / 2) - 24;
+  view.addChild(G);
+
   // расчётный лист
   const panel = CV.makePanel(660, 1130);
   panel.position.set((W() - 660) / 2, 24);
-  view.addChild(panel);
+  G.addChild(panel);
 
   const title = CV.makeText(CV.t('tuner.title'), 30, C.ink, { head: true, weight: '700', upper: true });
   title.anchor.set(0.5, 0); title.position.set(W() / 2, 64);
@@ -4113,11 +4126,11 @@ CV.scenes.tuner = (view, app) => {
   const note = CV.makeText(CV.t('tuner.cohortNote'), 10.5, C.ink40, { align: 'center' });
   note.anchor.set(0.5, 0);
   note.position.set(W() / 2, 132);
-  view.addChild(title, intro, note);
+  G.addChild(title, intro, note);
 
   // ── слайдеры: форма на бумаге ──
   const sliders = new PIXI.Container();
-  view.addChild(sliders);
+  G.addChild(sliders);
   const sliderDefs = [
     { key: 'T', label: 'tuner.dur', unit: 'tuner.days', min: 3, max: 21, step: 1, fmt: v => v },
     { key: 'B', label: 'tuner.budget', unit: 'tuner.pts', min: 4000, max: 40000, step: 500, fmt: v => v.toLocaleString('ru-RU') },
@@ -4224,11 +4237,11 @@ CV.scenes.tuner = (view, app) => {
   // ── график: миллировка ──
   const chartCard = CV.makeCard(560, 280);
   chartCard.position.set((W() - 560) / 2, sTop + 4);
-  view.addChild(chartCard);
+  G.addChild(chartCard);
   const chartG = new PIXI.Graphics();
   const chartW = 560, chartH = 280;
   chartG.position.set((W() - chartW) / 2, sTop + 4);
-  view.addChild(chartG);
+  G.addChild(chartG);
 
   const drawChart = () => {
     const g = chartG;
@@ -4270,12 +4283,12 @@ CV.scenes.tuner = (view, app) => {
     legend.addChild(item);
   });
   legend.position.set((W() - chartW) / 2 + 46, sTop + 4 + chartH + 12);
-  view.addChild(legend);
+  G.addChild(legend);
   sTop += chartH + 56;
 
   // ── проверки ──
   const checksC = new PIXI.Container();
-  view.addChild(checksC);
+  G.addChild(checksC);
   const checkRows = [];
   ['c1', 'c2', 'c3', 'c4', 'c5'].forEach((cid, i) => {
     const row = new PIXI.Container();
@@ -4293,11 +4306,11 @@ CV.scenes.tuner = (view, app) => {
   const verdictT = CV.makeText('', 22, C.stamp, { weight: '700', upper: true, ls: 2 });
   const verdictSub = CV.makeText('', 12.5, C.ink60, { wrap: true, wrapWidth: 540, align: 'center', ls: 0 });
   verdictT.anchor.set(0.5); verdictSub.anchor.set(0.5);
-  view.addChild(verdictT, verdictSub);
+  G.addChild(verdictT, verdictSub);
 
   const back = CV.makeButton(CV.t('common.back'), 170, { height: 50, size: 13, ghost: true, onTap: () => { CV.Sfx.tap(); CV.Scenes.switchTo('map'); } });
   back.position.set(W() / 2 - 85, 24 + 1130 + 14);
-  view.addChild(back);
+  G.addChild(back);
 
   const redraw = () => {
     result = CV.Tuner.compute(params);
@@ -4335,6 +4348,10 @@ CV.scenes.sheet = (view, app) => {
   const scroll = new PIXI.Container();
   view.addChild(scroll);
   const content = new PIXI.Container();
+  // контент живёт в колонке 720, центрируется на широком столе
+  const DX = Math.round((W() - 720) / 2);
+  const CX = DX + 360;
+  content.position.x = DX;
   scroll.addChild(content);
 
   let y = 30;
@@ -4342,21 +4359,21 @@ CV.scenes.sheet = (view, app) => {
 
   // ── шапка тома ──
   const volNum = CV.makeChip(CV.t('title.caseNo'), { ghost: true, size: 11, upper: true, padX: 10 });
-  addAt(volNum, (W() - volNum.w) / 2, y); y += volNum.h + 14;
+  addAt(volNum, (720 - volNum.w) / 2, y); y += volNum.h + 14;
   const volTitle = CV.makeText(CV.t('sheet.title'), 58, 0xcfd3d9, { head: true, weight: '700', upper: true });
   volTitle.anchor.set(0.5, 0);
-  addAt(volTitle, W() / 2, y); y += 74;
+  addAt(volTitle, 360, y); y += 74;
   const volSub = CV.makeText(CV.t('sheet.role'), 12, C.grey);
   volSub.anchor.set(0.5, 0);
-  addAt(volSub, W() / 2, y); y += 34;
+  addAt(volSub, 360, y); y += 34;
 
   // ── карточка офицера ──
   const CARD_H = 560;
   const card = CV.makePanel(660, CARD_H);
-  addAt(card, (W() - 660) / 2, y);
+  addAt(card, 30, y);
   const cardY = y;
   y += CARD_H + 22;
-  const cardX = (W() - 660) / 2;
+  const cardX = 30;
   const RX = cardX + 210; // правая колонка
   const RW = 660 - 210 - 30;
 
@@ -4522,16 +4539,16 @@ CV.scenes.sheet = (view, app) => {
 
   // PDF
   const bPdf = CV.makeButton(CV.t('sheet.dl'), 330, { height: 58, size: 13, red: true, onTap: () => { CV.Sfx.tap(); window.open(CV.DATA.contacts.pdf, '_blank'); } });
-  addAt(bPdf, W() / 2 - 165, y + 6);
+  addAt(bPdf, 360 - 165, y + 6);
   y += 76;
   const note = CV.makeText(CV.t('common.pdfNote'), 10.5, C.grey, { align: 'center', wrap: true, wrapWidth: 460, ls: 0 });
   note.anchor.set(0.5, 0);
-  addAt(note, W() / 2, y + 4);
+  addAt(note, 360, y + 4);
   y += 52;
 
   const contentH = y + 30;
   const back = CV.makeButton(CV.t('common.back'), 170, { height: 50, size: 13, ghost: true, onTap: () => { CV.Sfx.tap(); CV.Scenes.switchTo('map'); } });
-  addAt(back, W() / 2 - 85, contentH + 16);
+  addAt(back, 360 - 85, contentH + 16);
 
   // прокрутка: тач/мышь тянет контент
   const maxScroll = () => Math.max(0, contentH + 90 - (H() - 20));
@@ -4569,16 +4586,21 @@ CV.scenes.victory = (view, app) => {
   bg.beginFill(C.desk); bg.drawRect(0, 0, W(), H()); bg.endFill();
   view.addChild(bg);
 
-  const pool = CV.makeLampPool(app, W() / 2, 520, 440);
+  const pool = CV.makeLampPool(app, W() / 2, H() / 2 - 60, 440);
   view.addChild(pool);
   const dust = CV.makeDust(app, 26);
   view.addChild(dust);
+
+  // группа контента — вертикально центрируется на любом экране
+  const G = new PIXI.Container();
+  G.position.y = Math.round((H() - 1070) / 2) - 130;
+  view.addChild(G);
 
   // эпилог: лист дела
   const pw = 620, ph = 560;
   const paper = CV.makePanel(pw, ph);
   paper.position.set((W() - pw) / 2, 170);
-  view.addChild(paper);
+  G.addChild(paper);
 
   const caseNo = CV.makeText(CV.t('victory.caseNo'), 12, C.ink60, { ls: 6, upper: true });
   caseNo.anchor.set(0.5, 0);
@@ -4589,7 +4611,7 @@ CV.scenes.victory = (view, app) => {
   const sub = CV.makeText(CV.t('victory.sub'), 13, C.ink60);
   sub.anchor.set(0.5, 0);
   sub.position.set(W() / 2, 328);
-  view.addChild(caseNo, title, sub);
+  G.addChild(caseNo, title, sub);
 
   const s0 = performance.now() - (window.__sessionStart || performance.now());
   const stats = [
@@ -4603,22 +4625,23 @@ CV.scenes.victory = (view, app) => {
   const thanks = CV.makeText(CV.t('victory.thanks'), 12, C.ink60, { align: 'center', wrap: true, wrapWidth: 480, ls: 0 });
   thanks.anchor.set(0.5, 0);
   thanks.position.set(W() / 2, 428);
-  view.addChild(statsT, thanks);
+  G.addChild(statsT, thanks);
 
-  // линии для подписи
+  // линии для подписи — внутри листа, независимо от ширины стола
   const rules = new PIXI.Graphics();
   rules.setStrokeStyle({ width: 1, color: C.ink, alpha: 0.35 });
-  rules.moveTo(140, 560); rules.lineTo(580, 560);
-  rules.moveTo(140, 610); rules.lineTo(580, 610);
+  rules.moveTo(90, 560); rules.lineTo(530, 560);
+  rules.moveTo(90, 610); rules.lineTo(530, 610);
   rules.stroke();
-  view.addChild(rules);
+  rules.position.set((W() - 620) / 2, 0);
+  G.addChild(rules);
 
   // штамп «ГОДЕН К НАЙМУ» — влётовский шлепок
   const stamp = CV.makeStamp(CV.t('victory.stamp'), { size: 30, thick: 5, padX: 24, padY: 12, rotation: -6 * Math.PI / 180 });
   stamp.position.set(W() / 2 - 20, 586);
   stamp.visible = false;
   stamp.scale.set(2.6);
-  view.addChild(stamp);
+  G.addChild(stamp);
   setTimeout(() => { CV.Sfx.done(); CV.stampSlam(stamp); }, 700);
 
   const bPdf = CV.makeButton(CV.t('sheet.dl'), 340, { height: 60, size: 13, red: true, onTap: () => { CV.Sfx.tap(); window.open(CV.DATA.contacts.pdf, '_blank'); } });
@@ -4629,7 +4652,7 @@ CV.scenes.victory = (view, app) => {
   bGh.eventMode = 'static'; bGh.cursor = 'pointer';
   bGh.on('pointertap', () => { CV.Sfx.tap(); window.open(CV.DATA.contacts.gh, '_blank'); });
   bGh.position.set(W() / 2 - bGh.w / 2, 938);
-  view.addChild(bPdf, bMail, bGh);
+  G.addChild(bPdf, bMail, bGh);
 
   const back = CV.makeButton(CV.t('common.back'), 170, { height: 48, size: 12, ghost: true, onTap: () => { CV.Sfx.tap(); CV.Scenes.switchTo('map'); } });
   back.position.set(W() / 2 - 85, H() - 66);
@@ -4645,9 +4668,24 @@ CV.scenes.victory = (view, app) => {
 };
 
 // ── src/main.js ──
-// ── точка входа: pixi v8 (async init), шрифты, менеджер сцен ──
+// ── точка входа: pixi v8 (async init), адаптивная геометрия, менеджер сцен ──
 (async function () {
-  const LW = 720, LH = 1280; // логический размер (портрет)
+  // адаптивный логический размер: контент живёт в колонке 720, стол растягивается
+  // альбом/ПК: высота 1280, ширина до 1600 · портрет: ширина 720, высота до 1760
+  let LW = 720, LH = 1280;
+  const computeSize = () => {
+    const aw = Math.max(320, window.innerWidth), ah = Math.max(320, window.innerHeight);
+    const aspect = aw / ah;
+    if (aspect >= 1) {
+      LH = 1280;
+      LW = Math.min(1600, Math.max(720, Math.round(1280 * aspect)));
+    } else {
+      LW = 720;
+      LH = Math.min(1760, Math.max(1280, Math.round(720 / aspect)));
+    }
+  };
+  computeSize();
+
   const t0 = performance.now();
   window.__sessionStart = performance.now();
 
@@ -4661,9 +4699,15 @@ CV.scenes.victory = (view, app) => {
 
   progress(0.3, 'открываем архив…');
 
-  // PixiJS v8: асинхронная инициализация
+  // PixiJS v8: асинхронная инициализация; рендерим в dpr (до 2×) — хрусткий текст
   const app = new PIXI.Application();
-  await app.init({ width: LW, height: LH, background: 0x14161a, antialias: true });
+  await app.init({
+    width: LW, height: LH,
+    background: 0x14161a,
+    antialias: true,
+    resolution: Math.min(window.devicePixelRatio || 1, 2),
+    powerPreference: 'high-performance',
+  });
   document.getElementById('app').appendChild(app.canvas);
 
   const fit = () => {
@@ -4671,7 +4715,20 @@ CV.scenes.victory = (view, app) => {
     app.canvas.style.width = Math.round(LW * k) + 'px';
     app.canvas.style.height = Math.round(LH * k) + 'px';
   };
-  window.addEventListener('resize', fit);
+  // resize: пересчёт геометрии и пересборка текущей сцены (дебаунс)
+  let resizeT = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeT);
+    resizeT = setTimeout(() => {
+      const oldW = LW, oldH = LH;
+      computeSize();
+      fit();
+      if ((LW !== oldW || LH !== oldH) && window.__booted) {
+        app.renderer.resize(LW, LH);
+        CV.Scenes.switchTo(CV.Scenes.currentName);
+      }
+    }, 150);
+  });
   fit();
 
   progress(0.55, 'раскладываем материалы дела…');
@@ -4702,7 +4759,7 @@ CV.scenes.victory = (view, app) => {
   loader.style.opacity = '0';
   setTimeout(() => loader.remove(), 450);
   window.__booted = true;
-  console.log('[cv-vizor] готово за', (window.__loadMs / 1000).toFixed(2), 'сек');
+  console.log('[cv-vizor] готово за', (window.__loadMs / 1000).toFixed(2), 'сек ·', LW + '×' + LH);
 })();
 
 })();</script>

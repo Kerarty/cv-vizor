@@ -42,9 +42,11 @@ CV.scenes.map = (view, app) => {
   bg.beginFill(C.desk); bg.drawRect(0, 0, W(), H()); bg.endFill();
   layers.addChild(bg);
 
-  // ── лист дела ──
-  const sheet = CV.makePanel(668, 1148, { inner: false });
-  sheet.position.set((W() - 668) / 2, 84);
+  // ── лист дела: во всю ширину стола, по вертикали между HUD и низом ──
+  const sheetW = Math.max(668, W() - 52);
+  const sheet = CV.makePanel(sheetW, 1148, { inner: false });
+  const sheetY = Math.round(56 + (H() - 56 - 1148) / 2);
+  sheet.position.set((W() - sheetW) / 2, sheetY);
   layers.addChild(sheet);
 
   // водяной знак «карта дела»
@@ -52,6 +54,11 @@ CV.scenes.map = (view, app) => {
   wm.alpha = 0.5;
   wm.position.set(sheet.x + 30, sheet.y + 22);
   layers.addChild(wm);
+
+  // поле карты: контент в координатах 720, центрируется на широком столе
+  const FIELD = new PIXI.Container();
+  FIELD.position.set((W() - 720) / 2, sheetY - 84);
+  layers.addChild(FIELD);
 
   // маршрут: пунктир чернилами
   const road = new PIXI.Graphics();
@@ -67,7 +74,7 @@ CV.scenes.map = (view, app) => {
     }
   }
   road.stroke();
-  layers.addChild(road);
+  FIELD.addChild(road);
 
   // ── участки ──
   const TW = 168, TH = 56;
@@ -118,7 +125,7 @@ CV.scenes.map = (view, app) => {
     cont.on('pointerover', () => { if (!CV.State.opened.has(st.id)) cont.alpha = 0.86; });
     cont.on('pointerout', () => { cont.alpha = 1; });
     cont.on('pointertap', () => tapStation(st));
-    layers.addChild(cont);
+    FIELD.addChild(cont);
     stationViews.set(st.id, { cont, st });
   }
 
@@ -135,8 +142,9 @@ CV.scenes.map = (view, app) => {
     c.addChild(ring, q);
     c.position.set(n.x, n.y);
     c.eventMode = 'static'; c.cursor = 'pointer';
+    c.hitArea = new PIXI.Circle(0, 0, 28); // крупная тач-цель
     c.on('pointertap', () => collectClue(n.id, c));
-    layers.addChild(c);
+    FIELD.addChild(c);
     clueViews.set(n.id, c);
   }
 
@@ -150,7 +158,7 @@ CV.scenes.map = (view, app) => {
   worker.addChild(pin, hereT);
   worker.position.set(190, 380);
   worker.zIndex = 50;
-  layers.addChild(worker);
+  FIELD.addChild(worker);
   layers.sortableChildren = true;
 
   // ── HUD: служебная полоса дела ──
@@ -175,20 +183,20 @@ CV.scenes.map = (view, app) => {
   attT.anchor.set(0, 0.5); attT.position.set(230, 28);
   hud.addChild(attT);
 
-  let ordersChip = CV.makeChip(CV.t('hud.orders') + ' ' + CV.t('hud.ordersDone', { n: CV.State.ordersCount }), { ghost: true, size: 11, upper: true, padX: 12 });
+  let ordersChip = CV.makeChip(CV.t('hud.orders') + ' ' + CV.t('hud.ordersDone', { n: CV.State.ordersCount }), { ghost: true, size: 12, upper: true, padX: 12 });
   ordersChip.eventMode = 'static'; ordersChip.cursor = 'pointer';
   ordersChip.on('pointertap', () => { CV.Sfx.open(); toggleOrders(true); });
-  ordersChip.position.set(W() - 340, 15);
+  ordersChip.position.set(W() - 356, 14);
   hud.addChild(ordersChip);
 
-  const bPdf = CV.makeIcon('pdf', 26, C.paper);
+  const bPdf = CV.makeIcon('pdf', 30, C.paper);
   bPdf.eventMode = 'static'; bPdf.cursor = 'pointer';
-  bPdf.position.set(W() - 224, 15);
+  bPdf.position.set(W() - 232, 13);
   bPdf.on('pointertap', () => { CV.Sfx.tap(); window.open(CV.DATA.contacts.pdf, '_blank'); });
   hud.addChild(bPdf);
 
-  const bFile = CV.makeButton(CV.t('hud.file'), 152, { height: 34, size: 11, ghost: true, onTap: () => { CV.Sfx.open(); CV.Scenes.switchTo('sheet'); } });
-  bFile.position.set(W() - 178, 11);
+  const bFile = CV.makeButton(CV.t('hud.file'), 168, { height: 40, size: 12, ghost: true, onTap: () => { CV.Sfx.open(); CV.Scenes.switchTo('sheet'); } });
+  bFile.position.set(W() - 192, 8);
   hud.addChild(bFile);
 
   // ── энергия ──
@@ -304,13 +312,13 @@ CV.scenes.map = (view, app) => {
     const idx = sv.cont.parent.getChildIndex(sv.cont);
     const fresh = buildTile(st, true);
     fresh.position.copyFrom(sv.cont.position);
-    layers.addChildAt(fresh, idx);
+    FIELD.addChildAt(fresh, idx);
     sv.cont.destroy({ children: true });
     sv.cont = fresh;
     const slam = CV.makeStamp(CV.t('map.openStamp'), { size: 16, thick: 4, padX: 14, padY: 6, rotation: -8 * Math.PI / 180 });
     slam.position.set(st.x, st.y);
     slam.visible = false;
-    layers.addChild(slam);
+    FIELD.addChild(slam);
     await CV.stampSlam(slam);
     CV.Sfx.done();
     toast('✓ ' + CV.t('station.' + st.id + '.name'));
@@ -454,7 +462,7 @@ CV.scenes.map = (view, app) => {
     CV.State.save();
     CV.Sfx.done();
     // пересобираем чип: число депеш изменилось
-    const rebuilt = CV.makeChip(CV.t('hud.orders') + ' ' + CV.t('hud.ordersDone', { n: CV.State.ordersCount }), { ghost: true, size: 11, upper: true, padX: 12 });
+    const rebuilt = CV.makeChip(CV.t('hud.orders') + ' ' + CV.t('hud.ordersDone', { n: CV.State.ordersCount }), { ghost: true, size: 12, upper: true, padX: 12 });
     rebuilt.eventMode = 'static'; rebuilt.cursor = 'pointer';
     rebuilt.on('pointertap', () => { CV.Sfx.open(); toggleOrders(true); });
     rebuilt.position.copyFrom(ordersChip.position);

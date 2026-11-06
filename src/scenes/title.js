@@ -23,7 +23,7 @@ CV.scenes.title = (view, app) => {
   const ui = new PIXI.Container();
   layers.addChild(ui);
 
-  const fw = 624, fh = 806, fx = (W() - fw) / 2, fy = 208;
+  const fw = 624, fh = 806, fx = (W() - fw) / 2, fy = Math.round((H() - fh) / 2);
   const folder = CV.makePanel(fw, fh);
   folder.position.set(fx, fy);
   ui.addChild(folder);

@@ -12,6 +12,10 @@ CV.scenes.sheet = (view, app) => {
   const scroll = new PIXI.Container();
   view.addChild(scroll);
   const content = new PIXI.Container();
+  // контент живёт в колонке 720, центрируется на широком столе
+  const DX = Math.round((W() - 720) / 2);
+  const CX = DX + 360;
+  content.position.x = DX;
   scroll.addChild(content);
 
   let y = 30;
@@ -19,21 +23,21 @@ CV.scenes.sheet = (view, app) => {
 
   // ── шапка тома ──
   const volNum = CV.makeChip(CV.t('title.caseNo'), { ghost: true, size: 11, upper: true, padX: 10 });
-  addAt(volNum, (W() - volNum.w) / 2, y); y += volNum.h + 14;
+  addAt(volNum, (720 - volNum.w) / 2, y); y += volNum.h + 14;
   const volTitle = CV.makeText(CV.t('sheet.title'), 58, 0xcfd3d9, { head: true, weight: '700', upper: true });
   volTitle.anchor.set(0.5, 0);
-  addAt(volTitle, W() / 2, y); y += 74;
+  addAt(volTitle, 360, y); y += 74;
   const volSub = CV.makeText(CV.t('sheet.role'), 12, C.grey);
   volSub.anchor.set(0.5, 0);
-  addAt(volSub, W() / 2, y); y += 34;
+  addAt(volSub, 360, y); y += 34;
 
   // ── карточка офицера ──
   const CARD_H = 560;
   const card = CV.makePanel(660, CARD_H);
-  addAt(card, (W() - 660) / 2, y);
+  addAt(card, 30, y);
   const cardY = y;
   y += CARD_H + 22;
-  const cardX = (W() - 660) / 2;
+  const cardX = 30;
   const RX = cardX + 210; // правая колонка
   const RW = 660 - 210 - 30;
 
@@ -199,16 +203,16 @@ CV.scenes.sheet = (view, app) => {
 
   // PDF
   const bPdf = CV.makeButton(CV.t('sheet.dl'), 330, { height: 58, size: 13, red: true, onTap: () => { CV.Sfx.tap(); window.open(CV.DATA.contacts.pdf, '_blank'); } });
-  addAt(bPdf, W() / 2 - 165, y + 6);
+  addAt(bPdf, 360 - 165, y + 6);
   y += 76;
   const note = CV.makeText(CV.t('common.pdfNote'), 10.5, C.grey, { align: 'center', wrap: true, wrapWidth: 460, ls: 0 });
   note.anchor.set(0.5, 0);
-  addAt(note, W() / 2, y + 4);
+  addAt(note, 360, y + 4);
   y += 52;
 
   const contentH = y + 30;
   const back = CV.makeButton(CV.t('common.back'), 170, { height: 50, size: 13, ghost: true, onTap: () => { CV.Sfx.tap(); CV.Scenes.switchTo('map'); } });
-  addAt(back, W() / 2 - 85, contentH + 16);
+  addAt(back, 360 - 85, contentH + 16);
 
   // прокрутка: тач/мышь тянет контент
   const maxScroll = () => Math.max(0, contentH + 90 - (H() - 20));

@@ -1,123 +1,96 @@
-// ── сцена «Титул»: сумерки, станция, фонарь, снег, сияние ──
+// ── сцена «Титул»: обложка дела на тёмном столе, штамп, свет лампы ──
 CV.scenes = CV.scenes || {};
 CV.scenes.title = (view, app) => {
   const W = () => app.screen.width, H = () => app.screen.height;
+  const C = CV.COLORS;
   const layers = new PIXI.Container();
   view.addChild(layers);
 
-  // небо: глубокая ночь, градиент из настоящего ассета (тонируем)
-  const sky = new PIXI.Graphics();
-  const drawSky = () => {
-    sky.clear();
-    sky.beginFill(0x12212c); sky.drawRect(0, 0, W(), H()); sky.endFill();
-    sky.beginFill(0x1d3140); sky.drawRect(0, 0, W(), H() * 0.55); sky.endFill();
-    sky.beginFill(0x274253); sky.drawRect(0, 0, W(), H() * 0.3); sky.endFill();
-  };
-  drawSky();
-  layers.addChild(sky);
+  // стол
+  const desk = new PIXI.Graphics();
+  desk.beginFill(C.desk); desk.drawRect(0, 0, W(), H()); desk.endFill();
+  layers.addChild(desk);
 
-  // звёзды
-  const stars = new PIXI.Container();
-  for (let i = 0; i < 60; i++) {
-    const s = new PIXI.Graphics();
-    const a = 0.2 + Math.random() * 0.6;
-    s.beginFill(0xffffff, a); s.drawCircle(0, 0, Math.random() * 1.6 + 0.6); s.endFill();
-    s.x = Math.random() * 720; s.y = Math.random() * 420;
-    s._tw = Math.random() * Math.PI * 2;
-    stars.addChild(s);
-  }
-  layers.addChild(stars);
+  // световое пятно лампы
+  const pool = CV.makeLampPool(app, W() / 2, 600, 470);
+  layers.addChild(pool);
 
-  const aurora = CV.makeAurora(app, { y: 170, alpha: 0.55 });
-  layers.addChild(aurora);
+  // пыль в свете
+  const dust = CV.makeDust(app, 30);
+  layers.addChild(dust);
 
-  // даль: настоящий силуэт леса Park Zone в ночном тоне
-  const far = CV.sprite('map-treeline-winter');
-  if (far) {
-    far.width = W(); far.height = 150;
-    far.position.set(0, 472);
-    far.tint = 0x7d93a4;
-    far.alpha = 0.5;
-    layers.addChild(far);
-  }
-
-  // снежная земля
-  const ground = new PIXI.Graphics();
-  const drawGround = () => {
-    ground.clear();
-    ground.beginFill(0xd7e4ea); ground.drawRect(0, 620, W(), H() - 620); ground.endFill();
-    ground.beginFill(CV.COLORS.snow); ground.drawRect(0, 660, W(), H() - 660); ground.endFill();
-    // сугробы
-    ground.beginFill(0xf6fafc, 0.85);
-    for (let x = -40; x < W() + 60; x += 90) ground.ellipse(x, 690 + (x % 3) * 14, 90, 26);
-    ground.endFill();
-  };
-  drawGround();
-  layers.addChild(ground);
-
-  // станция: настоящий дом из пака + тёплое окно и фонарь кодом
-  const hut = new PIXI.Container();
-  const glow = new PIXI.Graphics();
-  glow.beginFill(CV.COLORS.gold, 0.16); glow.drawCircle(0, -40, 60); glow.endFill();
-  hut.addChild(glow);
-  const house = CV.sprite('b-title-house');
-  if (house) {
-    house.height = 150; house.width = 150 * 340 / 440;
-    house.anchor.set(0.5, 0.92);
-    hut.addChild(house);
-  }
-  hut.position.set(360, 730);
-  layers.addChild(hut);
-
-  // фонарь
-  const lamp = new PIXI.Container();
-  const lampG = new PIXI.Graphics();
-  lampG.beginFill(CV.COLORS.woodDark); lampG.drawRect(-2, -6, 4, 70); lampG.endFill();
-  lampG.beginFill(CV.COLORS.gold); lampG.drawRoundedRect(-9, -30, 18, 24, 4); lampG.endFill();
-  lampG.beginFill(CV.COLORS.goldLight, 0.9); lampG.drawRoundedRect(-6, -27, 12, 18, 3); lampG.endFill();
-  const halo = new PIXI.Graphics();
-  halo.beginFill(CV.COLORS.gold, 0.13); halo.drawCircle(0, -18, 64); halo.endFill();
-  lamp.addChild(halo, lampG);
-  lamp.position.set(170, 760);
-  layers.addChild(lamp);
-
-  const snow = CV.makeSnow(app, 110);
-  layers.addChild(snow);
-
-  // ── UI ──
+  // ── обложка дела ──
   const ui = new PIXI.Container();
   layers.addChild(ui);
 
-  const title = CV.makeText(CV.t('title.name'), 68, CV.COLORS.gold, { display: true, align: 'center', shadow: true, shadowColor: 0x000000 });
-  title.anchor.set(0.5, 0.5);
-  title.position.set(W() / 2, 300);
-  // автоподгонка: не шире экрана
-  const maxW = W() - 40;
-  if (title.width > maxW) title.scale.set(maxW / title.width);
-  ui.addChild(title);
+  const fw = 624, fh = 806, fx = (W() - fw) / 2, fy = 208;
+  const folder = CV.makePanel(fw, fh);
+  folder.position.set(fx, fy);
+  ui.addChild(folder);
 
-  const sub = CV.makeText(CV.t('title.subtitle'), 26, 0xcfe0ea, { align: 'center', ls: 3 });
-  sub.anchor.set(0.5);
-  sub.position.set(W() / 2, 368);
-  ui.addChild(sub);
+  const TX = fx + 56; // левый край текста
 
-  const hint = CV.makeText(CV.t('title.hint'), 17, 0x9fb8c9, { align: 'center' });
-  hint.anchor.set(0.5);
-  hint.position.set(W() / 2, 404);
-  ui.addChild(hint);
+  // штамп «К РАССМОТРЕНИЮ»
+  const stamp = CV.makeStamp(CV.t('title.stamp'), { size: 12 });
+  stamp.position.set(fx + fw - stamp.w / 2 - 26, fy + 58);
+  ui.addChild(stamp);
 
-  const bx = W() / 2;
-  const bPlay = CV.makeButton(CV.t('title.play'), 320, { height: 72, size: 27, onTap: () => { CV.Sfx.open(); CV.Scenes.switchTo('map'); } });
-  bPlay.position.set(bx - 160, 850);
-  ui.addChild(bPlay);
+  // номер дела
+  const caseNo = CV.makeText(CV.t('title.caseNo'), 13, C.ink60, { ls: 6, upper: true });
+  caseNo.position.set(TX, fy + 66);
+  ui.addChild(caseNo);
 
-  const bSkip = CV.makeButton(CV.t('title.skip'), 320, { height: 60, size: 21, onTap: () => { CV.Sfx.tap(); CV.Scenes.switchTo('sheet'); } });
-  bSkip.position.set(bx - 160, 946);
+  // заголовок: Освальд, капсом, лесенкой
+  const words = CV.t('title.name').split(' ');
+  const lines = words.length >= 3 ? [words.slice(0, 2).join(' '), words.slice(2).join(' ')] : words;
+  const maxTW = fw - 112;
+  let ty = fy + 128;
+  for (const line of lines) {
+    const t = CV.makeText(line, 86, C.ink, { head: true, weight: '700', upper: true, ls: 1 });
+    if (t.width > maxTW) t.scale.set(maxTW / t.width);
+    t.position.set(TX, ty);
+    ty += Math.round(t.height * 0.92);
+    ui.addChild(t);
+  }
+  ty += 4;
+
+  // кандидат и подзаголовок
+  const cand = CV.makeText(CV.t('title.candidate'), 14, C.ink, { ls: 3, upper: true });
+  cand.position.set(TX, ty); ui.addChild(cand);
+  ty += 34;
+  const sub = CV.makeText(CV.t('title.subtitle'), 13, C.ink60);
+  sub.position.set(TX, ty); ui.addChild(sub);
+  ty += 44;
+
+  // мета
+  const meta = CV.makeText(CV.t('title.meta'), 11, C.ink60, { wrap: true, wrapWidth: fw - 118 });
+  meta.position.set(TX, ty); ui.addChild(meta);
+  ty += Math.min(90, meta.height + 26);
+
+  // кнопки
+  const bOpen = CV.makeButton(CV.t('title.open'), 330, { height: 62, size: 15, onTap: () => { CV.Sfx.open(); CV.Scenes.switchTo('map'); } });
+  bOpen.position.set(TX, ty);
+  ui.addChild(bOpen);
+  const bSkip = CV.makeButton(CV.t('title.skip'), 330, { height: 50, size: 12, onTap: () => { CV.Sfx.tap(); CV.Scenes.switchTo('sheet'); } });
+  bSkip.position.set(TX, ty + 78);
   ui.addChild(bSkip);
 
-  // RU|EN + PDF + звук
+  // ряд: язык / PDF / звук — служебные кнопки на бумаге
   const row = new PIXI.Container();
-  const bLang = CV.makeChip(CV.getLang().toUpperCase() + ' → ' + (CV.getLang() === 'ru' ? 'EN' : 'RU'), { size: 15, fill: 0x00000030, line: 0xcfe0ea88, color: 0xffffff });
+  const rowY = fy + fh - 96;
+  const mkPaperChip = (label) => {
+    const t = CV.makeText(label, 12, C.ink, { ls: 2, upper: true });
+    const c = new PIXI.Container();
+    const g = new PIXI.Graphics();
+    const w = t.width + 20, h = 26;
+    g.setStrokeStyle({ width: 1, color: C.ink60 });
+    g.drawRect(0.5, 0.5, w - 1, h - 1); g.stroke();
+    t.position.set(10, h / 2); t.anchor.set(0, 0.5);
+    c.addChild(g, t);
+    c.w = w; c.h = h;
+    return c;
+  };
+  const bLang = mkPaperChip(CV.getLang().toUpperCase() + ' → ' + (CV.getLang() === 'ru' ? 'EN' : 'RU'));
   bLang.eventMode = 'static'; bLang.cursor = 'pointer';
   bLang.on('pointertap', () => {
     CV.setLang(CV.getLang() === 'ru' ? 'en' : 'ru'); CV.Sfx.tap();
@@ -125,40 +98,38 @@ CV.scenes.title = (view, app) => {
   });
   row.addChild(bLang);
 
-  const iconPdf = CV.makeIcon('pdf', 30);
-  const bPdf = new PIXI.Container();
-  bPdf.addChild(iconPdf);
+  const bPdf = CV.makeIcon('pdf', 26, C.ink);
   bPdf.eventMode = 'static'; bPdf.cursor = 'pointer';
   bPdf.on('pointertap', () => { CV.Sfx.tap(); window.open(CV.DATA.contacts.pdf, '_blank'); });
-  bPdf.position.set(0, 0);
-  row.addChild(bPdf);
-
   const bSnd = new PIXI.Container();
-  const drawSndIcon = () => {
+  const drawSnd = () => {
     bSnd.removeChildren().forEach(c => c.destroy({ children: true }));
-    bSnd.addChild(CV.makeIcon(CV.Sfx.muted ? 'mute' : 'sound', 30, 0x2e5d4b));
+    bSnd.addChild(CV.makeIcon(CV.Sfx.muted ? 'mute' : 'sound', 26, C.ink));
   };
   bSnd.eventMode = 'static'; bSnd.cursor = 'pointer';
-  bSnd.on('pointertap', () => { CV.Sfx.toggle(); drawSndIcon(); });
-  drawSndIcon();
-  row.addChild(bSnd);
-
-  row.children.forEach((c, i) => { c.x = i * 104; });
-  row.position.set(W() / 2 - 70, 1046);
+  bSnd.on('pointertap', () => { CV.Sfx.toggle(); drawSnd(); });
+  drawSnd();
+  row.addChild(bPdf, bSnd);
+  // раскладка ряда
+  let rx = TX;
+  bLang.position.set(rx, rowY); rx += bLang.w + 22;
+  bPdf.position.set(rx, rowY + 1); rx += 34;
+  bSnd.position.set(rx, rowY + 1);
   ui.addChild(row);
 
-  const loaded = CV.makeText(CV.t('title.loaded', { n: (window.__loadMs / 1000).toFixed(2) }), 15, 0x7d97a8, { align: 'center' });
-  loaded.anchor.set(0.5);
-  loaded.position.set(W() / 2, H() - 26);
+  // подпись под обложкой
+  const loaded = CV.makeText(CV.t('title.loaded', { n: (window.__loadMs / 1000).toFixed(2) }), 12, C.grey, { align: 'center' });
+  loaded.anchor.set(0.5, 0);
+  loaded.position.set(W() / 2, fy + fh + 26);
   ui.addChild(loaded);
+
+  // виньетка поверх
+  layers.addChild(CV.makeVignette(app));
 
   return {
     update(dt) {
-      snow.update(dt);
-      aurora.update(dt);
-      stars.children.forEach(s => { s._tw += dt * 2; s.alpha = 0.35 + Math.sin(s._tw) * 0.3; });
-      halo.alpha = 0.1 + Math.sin(performance.now() / 700) * 0.035;
-      glow.alpha = 0.13 + Math.sin(performance.now() / 900) * 0.04;
+      dust.update(dt);
+      stamp.alpha = 0.84 + Math.sin(performance.now() / 1400) * 0.04;
     },
   };
 };

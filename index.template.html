@@ -3,38 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<meta name="theme-color" content="#1d3140">
-<title>Золотая заявка — играбельное резюме геймдизайнера для Vizor Games</title>
-<meta name="description" content="Резюме-игра: карта-экспедиция в духе Klondike Adventures и живой тюнер лайвопс-события. Один файл, ноль сетевых запросов.">
+<meta name="theme-color" content="#14161a">
+<title>Золотая заявка — досье геймдизайнера для Vizor Games</title>
+<meta name="description" content="Резюме-досье в нуарной стилистике: карта дела, депеши и живой тюнер лайвопс-события. Один файл, ноль сетевых запросов.">
 <style>
 :root{
-  --snow:#EAF2F5; --taiga:#2E5D4B; --brusnika:#B5433A; --gold:#E8A93D;
-  --wood:#8A5A33; --sky:#9FB8C9; --ink:#20313C; --night:#1d3140;
+  --desk:#14161a; --paper:#ddd3bd; --ink:#2a251d; --stamp:#a33c2e; --grey:#8b8f97;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;overflow:hidden;background:var(--night)}
-body{font-family:'Nunito',sans-serif;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--desk)}
+body{font-family:'PT Mono','Courier New',monospace;-webkit-tap-highlight-color:transparent}
 #app{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
 #app canvas{display:block;touch-action:none}
-#loader{position:fixed;inset:0;background:var(--night);display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:18px;z-index:10;transition:opacity .4s}
-#loader .lamp{width:64px;height:64px;border-radius:50%;
-  background:radial-gradient(circle at 38% 32%, #f7d789 0 28%, var(--gold) 60%, #a86e1f 100%);
-  box-shadow:0 0 34px 6px rgba(232,169,61,.45);animation:lamp 1.6s ease-in-out infinite}
-@keyframes lamp{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-#loader .bar{width:min(46vw,260px);height:10px;border-radius:6px;background:#0e1a23;overflow:hidden;
-  border:1px solid #33506141}
-#loader .bar i{display:block;height:100%;width:8%;border-radius:6px;background:linear-gradient(90deg,#c98a26,var(--gold));transition:width .25s}
-#loader p{color:#9FB8C9;font-size:13px;letter-spacing:.4px}
+#loader{position:fixed;inset:0;background:var(--desk);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:20px;z-index:10;transition:opacity .4s}
+#loader .case{color:var(--paper);font-size:13px;letter-spacing:6px}
+#loader .stamp{border:3px solid var(--stamp);color:var(--stamp);padding:3px 10px;
+  font-size:11px;letter-spacing:4px;transform:rotate(9deg);opacity:.85}
+#loader .bar{width:min(46vw,260px);height:10px;border:1px solid #55595f;background:#101216;overflow:hidden}
+#loader .bar i{display:block;height:100%;width:8%;
+  background:repeating-linear-gradient(45deg,var(--stamp) 0 4px,#7c2f24 4px 8px);transition:width .25s}
+#loader p{color:var(--grey);font-size:12px;letter-spacing:1px}
 {{FONTS_CSS}}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <div id="loader">
-  <div class="lamp"></div>
+  <div class="stamp">К РАССМОТРЕНИЮ</div>
+  <div class="case">ДЕЛО № ВЗ-7</div>
   <div class="bar"><i id="loader-fill"></i></div>
-  <p id="loader-text">разжигаем фонарь…</p>
+  <p id="loader-text">открываем архив…</p>
 </div>
 <script>
 window.__errors = [];

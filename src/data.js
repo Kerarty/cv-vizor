@@ -2,15 +2,15 @@
 window.CV = window.CV || {};
 
 CV.DATA = {
-  // логическое поле карты 720×1280 (портрет); sprite — здание из пака CraftPix
+  // логическое поле карты 720×1280 (портрет); kind — чернильная пиктограмма
   stations: [
-    { id: 's1', x: 190, y: 300, kind: 'tent' },                        // палатка документалиста
-    { id: 's2', x: 480, y: 220, kind: 'mine', sprite: 'b-wood-warehouse' },    // прииск Эридора
-    { id: 's3', x: 580, y: 470, kind: 'factory', sprite: 'b-brick-warehouse' }, // playable-цех
-    { id: 's4', x: 320, y: 560, kind: 'loop', sprite: 'b-brick-house' },       // echoloop
-    { id: 's5', x: 120, y: 760, kind: 'harbor' },                      // гавань мини-игр
-    { id: 's6', x: 420, y: 880, kind: 'workshop', sprite: 'b-wood-house' },    // баланс-мастерская
-    { id: 's7', x: 360, y: 1090, kind: 'fort', sprite: 'b-fort' },     // форт vizor
+    { id: 's1', x: 190, y: 300, kind: 'tent' },      // палатка документалиста
+    { id: 's2', x: 480, y: 220, kind: 'mine' },      // прииск Эридора
+    { id: 's3', x: 580, y: 470, kind: 'factory' },   // playable-цех
+    { id: 's4', x: 320, y: 560, kind: 'loop' },      // echoloop
+    { id: 's5', x: 120, y: 760, kind: 'harbor' },    // гавань мини-игр
+    { id: 's6', x: 420, y: 880, kind: 'workshop' },  // баланс-мастерская
+    { id: 's7', x: 360, y: 1090, kind: 'fort' },     // форт vizor
   ],
 
   orders: [
@@ -21,14 +21,14 @@ CV.DATA = {
     { id: 'o5', needs: ['s4'],             opens: 'stack' },
   ],
 
-  // 3 самородка: у палатки, за елью у прииска, в просвете тумана у форта
+  // 3 улики: у палатки, у прииска, у форта
   nuggets: [
     { id: 'n1', x: 260, y: 345 },
     { id: 'n2', x: 540, y: 250 },
     { id: 'n3', x: 430, y: 1050 },
   ],
 
-  // награды заказов — какие блоки открываются на Листе кандидата
+  // награды депеш — какие блоки открываются в личном деле
   blocks: ['exp', 'skills', 'playable', 'stack'],
 
   contacts: {

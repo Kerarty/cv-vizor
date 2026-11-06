@@ -24,19 +24,18 @@ const SRC_FILES = [
   'src/main.js',
 ];
 
-// 1. шрифты -> @font-face c base64
+// 1. шрифты -> @font-face c base64 (PT Mono + вариативный Oswald, нуарное досье)
 const FONTS = [
-  ['RuslanDisplay-Regular.ttf', 'Ruslan Display', 'normal', 400, 'truetype'],
-  ['nunito-cyrillic-400.woff2', 'Nunito', 'normal', 400, 'woff2'],
-  ['nunito-cyrillic-700.woff2', 'Nunito', 'normal', 700, 'woff2'],
-  ['nunito-latin-400.woff2', 'Nunito', 'normal', 400, 'woff2'],
-  ['nunito-latin-700.woff2', 'Nunito', 'normal', 700, 'woff2'],
+  ['PTMono-400-cyrillic.woff2', 'PT Mono', 'normal', '400'],
+  ['PTMono-400-latin.woff2', 'PT Mono', 'normal', '400'],
+  ['Oswald-var-cyrillic.woff2', 'Oswald', 'normal', '500 700'],
+  ['Oswald-var-latin.woff2', 'Oswald', 'normal', '500 700'],
 ];
-const fontsCss = FONTS.map(([file, family, style, weight, fmt]) => {
-  if (!exists('assets/fonts/' + file)) throw new Error('нет шрифта: ' + file);
-  const b64 = fs.readFileSync(path.join(ROOT, 'assets/fonts', file)).toString('base64');
+const fontsCss = FONTS.map(([file, family, style, weight]) => {
+  if (!exists('assets/fonts-noir/' + file)) throw new Error('нет шрифта: ' + file);
+  const b64 = fs.readFileSync(path.join(ROOT, 'assets/fonts-noir', file)).toString('base64');
   return `@font-face{font-family:'${family}';font-style:${style};font-weight:${weight};` +
-    `src:url(data:font/${fmt};base64,${b64}) format('${fmt === 'truetype' ? 'truetype' : 'woff2'}');}`;
+    `src:url(data:font/woff2;base64,${b64}) format('woff2');}`;
 }).join('\n');
 
 // 2. спрайты assets/art → CV.ASSETS (dataURL, webp/png)

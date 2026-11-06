@@ -62,7 +62,7 @@ CV.scenes.victory = (view, app) => {
 
   const bPdf = CV.makeButton(CV.t('sheet.dl'), 340, { height: 60, size: 13, red: true, onTap: () => { CV.Sfx.tap(); window.open(CV.DATA.contacts.pdf, '_blank'); } });
   bPdf.position.set(W() / 2 - 170, 786);
-  const bMail = CV.makeButton(CV.t('victory.write'), 340, { height: 54, size: 12, onTap: () => { CV.Sfx.tap(); window.open(CV.DATA.contacts.mailto, '_blank'); } });
+  const bMail = CV.makeButton(CV.t('victory.write'), 340, { height: 54, size: 13, onTap: () => { CV.Sfx.tap(); window.open(CV.DATA.contacts.mailto, '_blank'); } });
   bMail.position.set(W() / 2 - 170, 862);
   const bGh = CV.makeChip(CV.DATA.contacts.github, { ghost: true, size: 12, color: C.gold, line: C.goldDeep, padX: 14 });
   bGh.eventMode = 'static'; bGh.cursor = 'pointer';
@@ -74,7 +74,7 @@ CV.scenes.victory = (view, app) => {
   back.position.set(W() / 2 - 85, H() - 66);
   view.addChild(back);
 
-  view.addChild(CV.makeVignette(app, 0.4));
+  view.addChild(CV.makeVignette(app, 0.3));
 
   return {
     update(dt) {

@@ -2820,11 +2820,11 @@ CV.DATA = {
     { id: 'o5', needs: ['s4'],             opens: 'stack' },
   ],
 
-  // 3 улики: у палатки, у прииска, у форта
+  // 3 улики: на свободных полях листа, вне плиток станций
   nuggets: [
-    { id: 'n1', x: 260, y: 345 },
-    { id: 'n2', x: 540, y: 250 },
-    { id: 'n3', x: 430, y: 1050 },
+    { id: 'n1', x: 315, y: 375 },
+    { id: 'n2', x: 620, y: 310 },
+    { id: 'n3', x: 520, y: 1080 },
   ],
 
   // награды депеш — какие блоки открываются в личном деле
@@ -2987,7 +2987,7 @@ window.CV = window.CV || {};
     };
     drawBg(up, false); drawBg(down, true);
     const size = opts.size || 15;
-    const mkText = () => CV.makeText(label, size, opts.red ? C.paperLight : (opts.ghost ? C.paper : C.ink), { ls: size * 0.22, upper: true });
+    const mkText = () => CV.makeText(label, size, opts.red ? C.paperLight : (opts.ghost ? 0xe8e4d8 : C.ink), { ls: size * 0.22, upper: true });
     const t = mkText();
     t.anchor.set(0.5); t.position.set(w / 2, h / 2 - 1);
     c.addChild(up, t);
@@ -3730,16 +3730,18 @@ CV.scenes.map = (view, app) => {
     clueViews.set(n.id, c);
   }
 
-  // ── метка «вы здесь» ──
+  // ── метка «вы здесь»: подпись под точкой, поверх плиток ──
   const worker = new PIXI.Container();
   const pin = new PIXI.Graphics();
   pin.beginFill(C.stamp); pin.drawCircle(0, 0, 6); pin.endFill();
   pin.circle(0, 0, 10); pin.stroke({ width: 2, color: C.stamp, alpha: 0.55 });
   const hereT = CV.makeText(CV.t('map.youAreHere'), 10, C.stamp, { ls: 2, upper: true });
-  hereT.anchor.set(0.5, 1); hereT.position.set(0, -16);
+  hereT.anchor.set(0.5, 0); hereT.position.set(0, 16);
   worker.addChild(pin, hereT);
   worker.position.set(190, 380);
+  worker.zIndex = 50;
   layers.addChild(worker);
+  layers.sortableChildren = true;
 
   // ── HUD: служебная полоса дела ──
   const hud = new PIXI.Container();
@@ -3791,7 +3793,7 @@ CV.scenes.map = (view, app) => {
   const toast = (text) => {
     const c = CV.makeChip(text, { ghost: true, line: C.stamp, color: C.paperLight, size: 13, padX: 16 });
     c.position.set(W() / 2 - c.w / 2, 74);
-    c.zIndex = 500; layers.addChild(c); layers.sortableChildren = true;
+    c.zIndex = 950; layers.addChild(c); layers.sortableChildren = true;
     CV.tween(c, { y: 88 }, 200).then(() =>
       setTimeout(() => { CV.tween(c, { alpha: 0 }, 300).then(() => c.destroy()); }, 1600));
   };
@@ -3800,6 +3802,7 @@ CV.scenes.map = (view, app) => {
   const factLayer = new PIXI.Container();
   factLayer.eventMode = 'static';
   factLayer.visible = false;
+  factLayer.zIndex = 900; // поверх метки «вы здесь» и плиток
   layers.addChild(factLayer);
   const showFacts = (st) => {
     factLayer.removeChildren().forEach(c => c.destroy({ children: true }));
@@ -3949,6 +3952,7 @@ CV.scenes.map = (view, app) => {
   const ordersLayer = new PIXI.Container();
   ordersLayer.eventMode = 'static';
   ordersLayer.visible = false;
+  ordersLayer.zIndex = 900;
   layers.addChild(ordersLayer);
 
   const buildOrders = () => {
@@ -4245,13 +4249,13 @@ CV.scenes.tuner = (view, app) => {
     line(result.series.plan, C.goldDeep, 3.5);
     line(result.series.avg, C.ink, 2.6);
     line(result.series.newbie, 0x7d8ea0, 2, 0.9);
-    line(result.series.pro, 0xb39a68, 2, 0.9);
+    line(result.series.pro, 0x6e7f72, 2, 0.9);
   };
 
   // легенда
   const legend = new PIXI.Container();
   const legendDefs = [
-    ['tuner.chartPlan', C.goldDeep], ['tuner.chartAvg', C.ink], ['tuner.chartNew', 0x7d8ea0], ['tuner.chartPro', 0xb39a68],
+    ['tuner.chartPlan', C.goldDeep], ['tuner.chartAvg', C.ink], ['tuner.chartNew', 0x7d8ea0], ['tuner.chartPro', 0x6e7f72],
   ];
   let lx = 0;
   legendDefs.forEach(([key, color]) => {
@@ -4356,20 +4360,24 @@ CV.scenes.sheet = (view, app) => {
   const RX = cardX + 210; // правая колонка
   const RW = 660 - 210 - 30;
 
-  // фото: тёмный силуэт из архива
+  // фото: тёмный силуэт из архива — голова и плечи, вросшие в нижний край
   const photoBg = new PIXI.Graphics();
-  photoBg.beginFill(C.paperDark); photoBg.drawRect(0, 0, 180, CARD_H); photoBg.endFill();
+  photoBg.beginFill(C.paperDark); photoBg.drawRect(0, 0, 180, CARD_H - 30); photoBg.endFill();
   photoBg.setStrokeStyle({ width: 1, color: 0x8d7f61 });
   CV.dashedRect(photoBg, 179.5, 0.5, 0, CARD_H - 1, 4, 4); photoBg.stroke();
   photoBg.position.set(cardX + 15, cardY + 15);
   const sil = new PIXI.Graphics();
   sil.beginFill(0x5a5245, 0.85);
-  sil.drawPolygon([45, 240, 37, 82, 70, 40, 110, 26, 150, 40, 183, 82, 175, 240]);
-  sil.endFill();
-  sil.position.set(photoBg.x + 15, photoBg.y + 90);
+  sil.circle(80, 62, 42); sil.endFill(); // голова
+  sil.beginFill(0x5a5245, 0.85);
+  sil.moveTo(8, 300); sil.lineTo(12, 196);
+  sil.quadraticCurveTo(16, 138, 54, 128); sil.lineTo(106, 128);
+  sil.quadraticCurveTo(144, 138, 148, 196); sil.lineTo(152, 300);
+  sil.closePath(); sil.endFill(); // плечи до нижнего края кадра
+  sil.position.set(photoBg.x + 10, photoBg.y + (CARD_H - 30) - 300);
   const photoCap = CV.makeText(CV.t('sheet.photo'), 9, C.ink60, { ls: 2, upper: true });
-  photoCap.anchor.set(0.5);
-  photoCap.position.set(photoBg.x + 90, cardY + CARD_H - 44);
+  photoCap.anchor.set(0.5, 0);
+  photoCap.position.set(photoBg.x + 90, photoBg.y + 14);
   content.addChild(photoBg, sil, photoCap);
 
   // имя и звание
@@ -4472,7 +4480,7 @@ CV.scenes.sheet = (view, app) => {
     no.position.set(74, y + 4);
     nm.position.set(150, y);
     if (nm.width > 400) nm.scale.set(400 / nm.width);
-    tag.position.set(690 - tag.w / 2, y + 14);
+    tag.position.set(678 - tag.w / 2, y + 14);
     content.addChild(headRow);
     y += 34;
     items.forEach(k => para((ok ? '✓ ' : '· ') + CV.t('sheet.' + k), 12, ok ? 0xd6d0c2 : 0x767b83));
@@ -4615,7 +4623,7 @@ CV.scenes.victory = (view, app) => {
 
   const bPdf = CV.makeButton(CV.t('sheet.dl'), 340, { height: 60, size: 13, red: true, onTap: () => { CV.Sfx.tap(); window.open(CV.DATA.contacts.pdf, '_blank'); } });
   bPdf.position.set(W() / 2 - 170, 786);
-  const bMail = CV.makeButton(CV.t('victory.write'), 340, { height: 54, size: 12, onTap: () => { CV.Sfx.tap(); window.open(CV.DATA.contacts.mailto, '_blank'); } });
+  const bMail = CV.makeButton(CV.t('victory.write'), 340, { height: 54, size: 13, onTap: () => { CV.Sfx.tap(); window.open(CV.DATA.contacts.mailto, '_blank'); } });
   bMail.position.set(W() / 2 - 170, 862);
   const bGh = CV.makeChip(CV.DATA.contacts.github, { ghost: true, size: 12, color: C.gold, line: C.goldDeep, padX: 14 });
   bGh.eventMode = 'static'; bGh.cursor = 'pointer';
@@ -4627,7 +4635,7 @@ CV.scenes.victory = (view, app) => {
   back.position.set(W() / 2 - 85, H() - 66);
   view.addChild(back);
 
-  view.addChild(CV.makeVignette(app, 0.4));
+  view.addChild(CV.makeVignette(app, 0.3));
 
   return {
     update(dt) {

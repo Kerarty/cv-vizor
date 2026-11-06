@@ -132,7 +132,7 @@ window.CV = window.CV || {};
     };
     drawBg(up, false); drawBg(down, true);
     const size = opts.size || 15;
-    const mkText = () => CV.makeText(label, size, opts.red ? C.paperLight : (opts.ghost ? C.paper : C.ink), { ls: size * 0.22, upper: true });
+    const mkText = () => CV.makeText(label, size, opts.red ? C.paperLight : (opts.ghost ? 0xe8e4d8 : C.ink), { ls: size * 0.22, upper: true });
     const t = mkText();
     t.anchor.set(0.5); t.position.set(w / 2, h / 2 - 1);
     c.addChild(up, t);

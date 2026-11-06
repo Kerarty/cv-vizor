@@ -140,16 +140,18 @@ CV.scenes.map = (view, app) => {
     clueViews.set(n.id, c);
   }
 
-  // ── метка «вы здесь» ──
+  // ── метка «вы здесь»: подпись под точкой, поверх плиток ──
   const worker = new PIXI.Container();
   const pin = new PIXI.Graphics();
   pin.beginFill(C.stamp); pin.drawCircle(0, 0, 6); pin.endFill();
   pin.circle(0, 0, 10); pin.stroke({ width: 2, color: C.stamp, alpha: 0.55 });
   const hereT = CV.makeText(CV.t('map.youAreHere'), 10, C.stamp, { ls: 2, upper: true });
-  hereT.anchor.set(0.5, 1); hereT.position.set(0, -16);
+  hereT.anchor.set(0.5, 0); hereT.position.set(0, 16);
   worker.addChild(pin, hereT);
   worker.position.set(190, 380);
+  worker.zIndex = 50;
   layers.addChild(worker);
+  layers.sortableChildren = true;
 
   // ── HUD: служебная полоса дела ──
   const hud = new PIXI.Container();
@@ -201,7 +203,7 @@ CV.scenes.map = (view, app) => {
   const toast = (text) => {
     const c = CV.makeChip(text, { ghost: true, line: C.stamp, color: C.paperLight, size: 13, padX: 16 });
     c.position.set(W() / 2 - c.w / 2, 74);
-    c.zIndex = 500; layers.addChild(c); layers.sortableChildren = true;
+    c.zIndex = 950; layers.addChild(c); layers.sortableChildren = true;
     CV.tween(c, { y: 88 }, 200).then(() =>
       setTimeout(() => { CV.tween(c, { alpha: 0 }, 300).then(() => c.destroy()); }, 1600));
   };
@@ -210,6 +212,7 @@ CV.scenes.map = (view, app) => {
   const factLayer = new PIXI.Container();
   factLayer.eventMode = 'static';
   factLayer.visible = false;
+  factLayer.zIndex = 900; // поверх метки «вы здесь» и плиток
   layers.addChild(factLayer);
   const showFacts = (st) => {
     factLayer.removeChildren().forEach(c => c.destroy({ children: true }));
@@ -359,6 +362,7 @@ CV.scenes.map = (view, app) => {
   const ordersLayer = new PIXI.Container();
   ordersLayer.eventMode = 'static';
   ordersLayer.visible = false;
+  ordersLayer.zIndex = 900;
   layers.addChild(ordersLayer);
 
   const buildOrders = () => {

@@ -37,20 +37,24 @@ CV.scenes.sheet = (view, app) => {
   const RX = cardX + 210; // правая колонка
   const RW = 660 - 210 - 30;
 
-  // фото: тёмный силуэт из архива
+  // фото: тёмный силуэт из архива — голова и плечи, вросшие в нижний край
   const photoBg = new PIXI.Graphics();
-  photoBg.beginFill(C.paperDark); photoBg.drawRect(0, 0, 180, CARD_H); photoBg.endFill();
+  photoBg.beginFill(C.paperDark); photoBg.drawRect(0, 0, 180, CARD_H - 30); photoBg.endFill();
   photoBg.setStrokeStyle({ width: 1, color: 0x8d7f61 });
   CV.dashedRect(photoBg, 179.5, 0.5, 0, CARD_H - 1, 4, 4); photoBg.stroke();
   photoBg.position.set(cardX + 15, cardY + 15);
   const sil = new PIXI.Graphics();
   sil.beginFill(0x5a5245, 0.85);
-  sil.drawPolygon([45, 240, 37, 82, 70, 40, 110, 26, 150, 40, 183, 82, 175, 240]);
-  sil.endFill();
-  sil.position.set(photoBg.x + 15, photoBg.y + 90);
+  sil.circle(80, 62, 42); sil.endFill(); // голова
+  sil.beginFill(0x5a5245, 0.85);
+  sil.moveTo(8, 300); sil.lineTo(12, 196);
+  sil.quadraticCurveTo(16, 138, 54, 128); sil.lineTo(106, 128);
+  sil.quadraticCurveTo(144, 138, 148, 196); sil.lineTo(152, 300);
+  sil.closePath(); sil.endFill(); // плечи до нижнего края кадра
+  sil.position.set(photoBg.x + 10, photoBg.y + (CARD_H - 30) - 300);
   const photoCap = CV.makeText(CV.t('sheet.photo'), 9, C.ink60, { ls: 2, upper: true });
-  photoCap.anchor.set(0.5);
-  photoCap.position.set(photoBg.x + 90, cardY + CARD_H - 44);
+  photoCap.anchor.set(0.5, 0);
+  photoCap.position.set(photoBg.x + 90, photoBg.y + 14);
   content.addChild(photoBg, sil, photoCap);
 
   // имя и звание
@@ -153,7 +157,7 @@ CV.scenes.sheet = (view, app) => {
     no.position.set(74, y + 4);
     nm.position.set(150, y);
     if (nm.width > 400) nm.scale.set(400 / nm.width);
-    tag.position.set(690 - tag.w / 2, y + 14);
+    tag.position.set(678 - tag.w / 2, y + 14);
     content.addChild(headRow);
     y += 34;
     items.forEach(k => para((ok ? '✓ ' : '· ') + CV.t('sheet.' + k), 12, ok ? 0xd6d0c2 : 0x767b83));

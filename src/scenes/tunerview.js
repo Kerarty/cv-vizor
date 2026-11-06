@@ -159,13 +159,13 @@ CV.scenes.tuner = (view, app) => {
     line(result.series.plan, C.goldDeep, 3.5);
     line(result.series.avg, C.ink, 2.6);
     line(result.series.newbie, 0x7d8ea0, 2, 0.9);
-    line(result.series.pro, 0xb39a68, 2, 0.9);
+    line(result.series.pro, 0x6e7f72, 2, 0.9);
   };
 
   // легенда
   const legend = new PIXI.Container();
   const legendDefs = [
-    ['tuner.chartPlan', C.goldDeep], ['tuner.chartAvg', C.ink], ['tuner.chartNew', 0x7d8ea0], ['tuner.chartPro', 0xb39a68],
+    ['tuner.chartPlan', C.goldDeep], ['tuner.chartAvg', C.ink], ['tuner.chartNew', 0x7d8ea0], ['tuner.chartPro', 0x6e7f72],
   ];
   let lx = 0;
   legendDefs.forEach(([key, color]) => {

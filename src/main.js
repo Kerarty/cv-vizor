@@ -1,18 +1,10 @@
-// ── точка входа: pixi v8 (async init), адаптивная геометрия, менеджер сцен ──
+// ── точка входа: pixi v8 (async init), логический размер = окно в CSS-пикселях, ──
+//    сцена занимает весь экран; текст не уменьшается на телефоне ──
 (async function () {
-  // адаптивный логический размер: контент живёт в колонке 720, стол растягивается
-  // альбом/ПК: высота 1280, ширина до 1600 · портрет: ширина 720, высота до 1760
   let LW = 720, LH = 1280;
   const computeSize = () => {
-    const aw = Math.max(320, window.innerWidth), ah = Math.max(320, window.innerHeight);
-    const aspect = aw / ah;
-    if (aspect >= 1) {
-      LH = 1280;
-      LW = Math.min(1600, Math.max(720, Math.round(1280 * aspect)));
-    } else {
-      LW = 720;
-      LH = Math.min(1760, Math.max(1280, Math.round(720 / aspect)));
-    }
+    LW = Math.max(300, Math.round(window.innerWidth));
+    LH = Math.max(460, Math.round(window.innerHeight));
   };
   computeSize();
 
@@ -29,21 +21,21 @@
 
   progress(0.3, 'открываем архив…');
 
-  // PixiJS v8: асинхронная инициализация; рендерим в dpr (до 2×) — хрусткий текст
+  // PixiJS v8: рендерим в dpr (до 2×) — хрусткий текст на ретине
   const app = new PIXI.Application();
   await app.init({
     width: LW, height: LH,
     background: 0x14161a,
     antialias: true,
     resolution: Math.min(window.devicePixelRatio || 1, 2),
+    autoDensity: true,
     powerPreference: 'high-performance',
   });
   document.getElementById('app').appendChild(app.canvas);
 
   const fit = () => {
-    const k = Math.min(window.innerWidth / LW, window.innerHeight / LH);
-    app.canvas.style.width = Math.round(LW * k) + 'px';
-    app.canvas.style.height = Math.round(LH * k) + 'px';
+    app.canvas.style.width = '100%';
+    app.canvas.style.height = '100%';
   };
   // resize: пересчёт геометрии и пересборка текущей сцены (дебаунс)
   let resizeT = null;
@@ -55,9 +47,9 @@
       fit();
       if ((LW !== oldW || LH !== oldH) && window.__booted) {
         app.renderer.resize(LW, LH);
-        CV.Scenes.switchTo(CV.Scenes.currentName);
+        CV.Scenes.rebuild();
       }
-    }, 150);
+    }, 180);
   });
   fit();
 

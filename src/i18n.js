@@ -22,7 +22,7 @@ ru: {
     caseNo: 'ДЕЛО № ВЗ-7',
     energy: 'энергия', attention: 'внимание {s} сек',
     orders: 'ДЕПЕШИ', ordersDone: '{n}/5',
-    file: 'Личное дело',
+    file: 'Личное дело', fileShort: 'Дело',
   },
   map: {
     closed: 'Закрыто',
@@ -30,10 +30,11 @@ ru: {
     youAreHere: 'вы здесь',
     lastPush: 'Последний рывок!',
     clue: 'Улика найдена: +10 энергии',
-    clueFound: 'Улика {n}/3',
+    clueFound: 'Собрано {n}/3',
     ordersTitle: 'Депеши',
     allOpen: 'Все участки вскрыты!',
     fortHint: 'Форт вскроется после 5/5 депеш',
+    fortOpen: 'Форт Vizor вскрыт — зайдите внутрь',
   },
   station: {
     s1: { name: 'Палатка документалиста', sub: 'концепт-документ',
@@ -113,6 +114,8 @@ ru: {
   },
   sheet: {
     title: 'Личное дело',
+    name: 'Кукар Ярослав',
+    caseWord: 'ДЕЛО',
     role: 'Game Designer · начинающий, с технической базой',
     rank: 'звание: геймдизайнер · специализация: системы, баланс, документация',
     photo: 'фото из архива',
@@ -160,6 +163,7 @@ ru: {
     contacts: 'Контакты',
     dl: 'Скачать резюме в PDF',
     golden: 'улов: 3/3 улики',
+    scrollHint: 'листайте колесом мыши или свайпом',
   },
   victory: {
     caseNo: 'ДЕЛО № ВЗ-7',
@@ -171,9 +175,9 @@ ru: {
     write: 'Написать кандидату', gh: 'GitHub · всё портфолио',
   },
   nugget: {
-    n1: { t: 'Улика 1/3', x: 'Это досье собрано по канонам playable-рекламы: один HTML-файл, ноль сетевых запросов, старт с одного клика.' },
-    n2: { t: 'Улика 2/3', x: 'Энергия в этой игре — флейвор из Klondike. Но HR я никогда не заставляю ждать: регенерация 1 ед/2 сек, а путь до PDF — два тапа.' },
-    n3: { t: 'Улика 3/3', x: 'Таймер «внимание» в углу — приём из моей резюме-экономики: я считаю чужие секунды. Сколько их у вас сейчас?' },
+    n1: { t: 'Улика № 1', x: 'Это досье собрано по канонам playable-рекламы: один HTML-файл, ноль сетевых запросов, старт с одного клика.' },
+    n2: { t: 'Улика № 2', x: 'Энергия в этой игре — флейвор из Klondike. Но HR я никогда не заставляю ждать: регенерация 1 ед/2 сек, а путь до PDF — два тапа.' },
+    n3: { t: 'Улика № 3', x: 'Таймер «внимание» в углу — приём из моей резюме-экономики: я считаю чужие секунды. Сколько их у вас сейчас?' },
   },
 },
 en: {
@@ -197,7 +201,7 @@ en: {
     caseNo: 'CASE NO. GD-7',
     energy: 'energy', attention: 'attention {s}s',
     orders: 'TELEGRAMS', ordersDone: '{n}/5',
-    file: 'The file',
+    file: 'The file', fileShort: 'File',
   },
   map: {
     closed: 'Sealed',
@@ -205,10 +209,11 @@ en: {
     youAreHere: 'you are here',
     lastPush: 'Last push!',
     clue: 'Clue found: +10 energy',
-    clueFound: 'Clue {n}/3',
+    clueFound: 'Collected {n}/3',
     ordersTitle: 'Telegrams',
     allOpen: 'All districts are open!',
     fortHint: 'The fort unseals after 5/5 telegrams',
+    fortOpen: 'Fort Vizor is open — step inside',
   },
   station: {
     s1: { name: 'Documentalist Tent', sub: 'concept document',
@@ -288,9 +293,11 @@ en: {
   },
   sheet: {
     title: 'The File',
+    name: 'Yaroslav Kukar',
+    caseWord: 'CASE',
     role: 'Game Designer · junior, with an engineering base',
     rank: 'rank: game designer · specialty: systems, balance, documentation',
-    photo: 'photo from the archive',
+    photo: 'archive photo',
     traitsTitle: 'Special marks',
     trait1: '"Engineer" — a game-industry degree behind',
     trait2: '"Analyst" — probability and statistics instead of guessing',
@@ -335,6 +342,7 @@ en: {
     contacts: 'Contacts',
     dl: 'Download resume PDF',
     golden: 'clue haul: 3/3',
+    scrollHint: 'scroll with the mouse wheel or swipe',
   },
   victory: {
     caseNo: 'CASE NO. GD-7',
@@ -346,9 +354,9 @@ en: {
     write: 'Write to the candidate', gh: 'GitHub · the full portfolio',
   },
   nugget: {
-    n1: { t: 'Clue 1/3', x: 'This dossier is built by playable-ads canon: one HTML file, zero network requests, one click to start.' },
-    n2: { t: 'Clue 2/3', x: 'Energy here is flavor borrowed from Klondike. But I never make the HR wait: regeneration is 1 unit/2s, and the path to the PDF is two taps.' },
-    n3: { t: 'Clue 3/3', x: 'The "attention" timer in the corner is a trick from my resume-economy: I count other people\'s seconds. How many do you have now?' },
+    n1: { t: 'Clue no. 1', x: 'This dossier is built by playable-ads canon: one HTML file, zero network requests, one click to start.' },
+    n2: { t: 'Clue no. 2', x: 'Energy here is flavor borrowed from Klondike. But I never make the HR wait: regeneration is 1 unit/2s, and the path to the PDF is two taps.' },
+    n3: { t: 'Clue no. 3', x: 'The "attention" timer in the corner is a trick from my resume-economy: I count other people\'s seconds. How many do you have now?' },
   },
 },
 };

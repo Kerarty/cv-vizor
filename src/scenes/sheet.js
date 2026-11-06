@@ -1,240 +1,340 @@
 // ── сцена «Личное дело»: карточка офицера, дела-проекты, печати ──
 CV.scenes = CV.scenes || {};
 CV.scenes.sheet = (view, app) => {
-  const W = () => app.screen.width, H = () => app.screen.height;
+  const L = CV.layout();
+  const { W, H, phone, pad, colW, colX, headerH, fs } = L;
   const C = CV.COLORS;
 
+  // тёмный стол и виньетка
   const bg = new PIXI.Graphics();
-  bg.beginFill(C.desk); bg.drawRect(0, 0, W(), H()); bg.endFill();
+  bg.beginFill(C.desk); bg.drawRect(0, 0, W, H); bg.endFill();
   view.addChild(bg);
   view.addChild(CV.makeVignette(app, 0.4));
 
+  // ── прокручиваемый контент ──
   const scroll = new PIXI.Container();
   view.addChild(scroll);
   const content = new PIXI.Container();
-  // контент живёт в колонке 720, центрируется на широком столе
-  const DX = Math.round((W() - 720) / 2);
-  const CX = DX + 360;
-  content.position.x = DX;
+  const top = headerH + 14;
+  content.position.set(colX, top);
   scroll.addChild(content);
 
-  let y = 30;
-  const addAt = (el, x, yy) => { el.position.set(x, yy); content.addChild(el); return el; };
+  let y = 0;
+  const textW = Math.max(200, colW - 4);
+  const para = (text, size, color, opts = {}) => {
+    const t = CV.makeText(text, size || (phone ? 14.5 : 15), color || 0xd6d0c2, {
+      wrap: true, wrapWidth: textW, ls: 0, lineHeight: (size || (phone ? 14.5 : 15)) * 1.45, ...opts,
+    });
+    t.position.set(0, y);
+    content.addChild(t);
+    y += t.height + 7;
+    return t;
+  };
+  const section = (name) => {
+    y += phone ? 22 : 28;
+    const head = CV.makeText(name, phone ? 18 : 20, C.gold, { head: true, weight: '600', upper: true, ls: 2.5 });
+    head.position.set(0, y);
+    content.addChild(head);
+    y += head.height + 10;
+  };
+  const flow = (chips, x, startY, maxW, gapX = 7, gapY = 7) => {
+    let cx = 0, cy = startY;
+    chips.forEach(ch => {
+      if (cx > 0 && cx + ch.w > maxW) { cx = 0; cy += ch.h + gapY; }
+      ch.position.set(x + cx, cy);
+      cx += ch.w + gapX;
+    });
+    return cy + (chips.length ? chips[chips.length - 1].h : 0);
+  };
 
   // ── шапка тома ──
-  const volNum = CV.makeChip(CV.t('title.caseNo'), { ghost: true, size: 11, upper: true, padX: 10 });
-  addAt(volNum, (720 - volNum.w) / 2, y); y += volNum.h + 14;
-  const volTitle = CV.makeText(CV.t('sheet.title'), 58, 0xcfd3d9, { head: true, weight: '700', upper: true });
+  const volNum = CV.makeChip(CV.t('title.caseNo'), { ghost: true, size: phone ? 10.5 : 11, upper: true, padX: 10 });
+  volNum.position.set((colW - volNum.w) / 2, y);
+  content.addChild(volNum);
+  y += volNum.h + 12;
+
+  const volTitle = CV.makeText(CV.t('sheet.title'), phone ? 40 : 54, 0xcfd3d9, { head: true, weight: '700', upper: true, ls: 1 });
+  CV.fitText(volTitle, colW);
   volTitle.anchor.set(0.5, 0);
-  addAt(volTitle, 360, y); y += 74;
-  const volSub = CV.makeText(CV.t('sheet.role'), 12, C.grey);
+  volTitle.position.set(colW / 2, y);
+  content.addChild(volTitle);
+  y += volTitle.height + 6;
+
+  const volSub = CV.makeText(CV.t('sheet.role'), phone ? 12.5 : 14, C.grey, { align: 'center', wrap: true, wrapWidth: colW, ls: 0, lineHeight: (phone ? 12.5 : 14) * 1.4 });
   volSub.anchor.set(0.5, 0);
-  addAt(volSub, 360, y); y += 34;
+  volSub.position.set(colW / 2, y);
+  content.addChild(volSub);
+  y += volSub.height + 6;
+
+  const hint = CV.makeText(CV.t('sheet.scrollHint'), phone ? 10.5 : 11.5, C.ink40, { align: 'center', ls: 0.5 });
+  hint.anchor.set(0.5, 0);
+  hint.position.set(colW / 2, y);
+  content.addChild(hint);
+  y += hint.height + 18;
 
   // ── карточка офицера ──
-  const CARD_H = 560;
-  const card = CV.makePanel(660, CARD_H);
-  addAt(card, 30, y);
-  const cardY = y;
-  y += CARD_H + 22;
-  const cardX = 30;
-  const RX = cardX + 210; // правая колонка
-  const RW = 660 - 210 - 30;
+  const cardPad = phone ? 16 : 22;
+  const cardC = new PIXI.Container();
+  const cardContent = new PIXI.Container();
 
-  // фото: тёмный силуэт из архива — голова и плечи, вросшие в нижний край
+  const photoW = phone ? 92 : 148;
+  const photoH = phone ? 118 : 204;
+
+  let leftBottom = 0;
+
+  // фото: тёмный силуэт из архива
   const photoBg = new PIXI.Graphics();
-  photoBg.beginFill(C.paperDark); photoBg.drawRect(0, 0, 180, CARD_H - 30); photoBg.endFill();
+  photoBg.beginFill(C.paperDark); photoBg.drawRect(0, 0, photoW, photoH); photoBg.endFill();
   photoBg.setStrokeStyle({ width: 1, color: 0x8d7f61 });
-  CV.dashedRect(photoBg, 179.5, 0.5, 0, CARD_H - 1, 4, 4); photoBg.stroke();
-  photoBg.position.set(cardX + 15, cardY + 15);
+  CV.dashedRect(photoBg, 0.5, 0.5, photoW - 1, photoH - 1, 4, 4); photoBg.stroke();
+  photoBg.position.set(cardPad, cardPad);
   const sil = new PIXI.Graphics();
   sil.beginFill(0x5a5245, 0.85);
-  sil.circle(80, 62, 42); sil.endFill(); // голова
+  sil.circle(photoW / 2, photoH * 0.3, photoW * 0.2); sil.endFill();
   sil.beginFill(0x5a5245, 0.85);
-  sil.moveTo(8, 300); sil.lineTo(12, 196);
-  sil.quadraticCurveTo(16, 138, 54, 128); sil.lineTo(106, 128);
-  sil.quadraticCurveTo(144, 138, 148, 196); sil.lineTo(152, 300);
-  sil.closePath(); sil.endFill(); // плечи до нижнего края кадра
-  sil.position.set(photoBg.x + 10, photoBg.y + (CARD_H - 30) - 300);
-  const photoCap = CV.makeText(CV.t('sheet.photo'), 9, C.ink60, { ls: 2, upper: true });
+  sil.moveTo(photoW * 0.06, photoH); sil.lineTo(photoW * 0.1, photoH * 0.62);
+  sil.quadraticCurveTo(photoW * 0.14, photoH * 0.44, photoW * 0.33, photoH * 0.42);
+  sil.lineTo(photoW * 0.67, photoH * 0.42);
+  sil.quadraticCurveTo(photoW * 0.86, photoH * 0.44, photoW * 0.9, photoH * 0.62);
+  sil.lineTo(photoW * 0.94, photoH);
+  sil.closePath(); sil.endFill();
+  sil.position.set(cardPad, cardPad);
+  const photoCap = CV.makeText(CV.t('sheet.photo'), 8.5, C.ink60, { ls: 1.5, upper: true, align: 'center' });
+  CV.fitText(photoCap, photoW - 8);
   photoCap.anchor.set(0.5, 0);
-  photoCap.position.set(photoBg.x + 90, photoBg.y + 14);
-  content.addChild(photoBg, sil, photoCap);
+  photoCap.position.set(cardPad + photoW / 2, cardPad + 8);
+  cardContent.addChild(photoBg, sil, photoCap);
+  leftBottom = cardPad + photoH;
 
   // имя и звание
-  const nameT = CV.makeText('Кукар Ярослав', 25, C.ink, { head: true, weight: '700', upper: true, ls: 2 });
-  nameT.position.set(RX, cardY + 34);
-  const rankT = CV.makeText(CV.t('sheet.rank'), 10, C.ink60, { wrap: true, wrapWidth: RW, ls: 0 });
-  rankT.position.set(RX, cardY + 68);
-  content.addChild(nameT, rankT);
+  const rightX = cardPad + photoW + 14;
+  const rightW = Math.max(120, colW - rightX - cardPad);
+  const nameT = CV.makeText(CV.t('sheet.name'), phone ? 20 : 26, C.ink, { head: true, weight: '700', upper: true, ls: 1 });
+  CV.fitText(nameT, rightW);
+  nameT.position.set(rightX, cardPad);
+  const rankT = CV.makeText(CV.t('sheet.rank'), phone ? 11 : 12.5, C.ink60, {
+    wrap: true, wrapWidth: rightW, ls: 0, lineHeight: (phone ? 11 : 12.5) * 1.4,
+  });
+  rankT.position.set(rightX, cardPad + nameT.height + 6);
+  cardContent.addChild(nameT, rankT);
 
-  // штамп за улики
-  if (CV.State.nuggets.size >= 3) {
-    const gs = CV.makeStamp(CV.t('sheet.golden'), { size: 10, thick: 2, padX: 8, padY: 3, rotation: -6 * Math.PI / 180 });
-    gs.position.set(cardX + 660 - gs.w / 2 - 30, cardY + 24);
-    content.addChild(gs);
-  }
-
-  // статы: полосатые бары
+  // статы
   const stats = [
     ['statDesign', CV.DATA.sheetStats[0]],
     ['statBalance', CV.DATA.sheetStats[1]],
     ['statProto', CV.DATA.sheetStats[2]],
     ['statDocs', CV.DATA.sheetStats[3]],
   ];
-  let sy = cardY + 104;
-  const barW = 150, barH = 11;
+  const statsX = phone ? cardPad : rightX;
+  const statsW = phone ? colW - cardPad * 2 : rightW;
+  let sy = phone
+    ? cardPad + Math.max(photoH, nameT.height + rankT.height + 6) + 14
+    : cardPad + nameT.height + 6 + rankT.height + 14;
   stats.forEach(([key, s], i) => {
-    const lab = CV.makeText(CV.t('sheet.' + key), 10, C.ink, { wrap: true, wrapWidth: RW - barW - 60, ls: 0 });
-    lab.position.set(RX, sy + 1);
-    const bar = CV.makeStatBar(barW, barH);
-    bar.position.set(RX + RW - barW - 26, sy);
-    content.addChild(lab, bar);
-    const val = CV.makeText(String(Math.round(s.value * 10)), 12, C.ink, { weight: '700' });
+    const lab = CV.makeText(CV.t('sheet.' + key), phone ? 12 : 12.5, C.ink, {
+      wrap: true, wrapWidth: statsW - 44, ls: 0, lineHeight: (phone ? 12 : 12.5) * 1.35,
+    });
+    lab.position.set(statsX, sy);
+    const barW = Math.max(60, statsW - 42);
+    const bar = CV.makeStatBar(barW, 10);
+    bar.position.set(statsX, sy + lab.height + 4);
+    const val = CV.makeText(String(Math.round(s.value * 10)), 12.5, C.ink, { weight: '700' });
     val.anchor.set(0, 0.5);
-    val.position.set(RX + RW - 12, sy + barH / 2);
-    content.addChild(val);
+    val.position.set(statsX + barW + 10, sy + lab.height + 4 + 5);
+    cardContent.addChild(lab, bar, val);
     const anim = { _f: 0 };
     Object.defineProperty(anim, 'f', {
       get() { return this._f; },
       set(v) { this._f = v; bar.setFill(v); },
     });
     CV.tween(anim, { f: s.value }, 900 + i * 150);
-    sy += 44;
+    sy += lab.height + 4 + 10 + 12;
   });
 
-  // особые приметы
-  let py = sy + 8;
-  const traitsTitle = CV.makeText(CV.t('sheet.traitsTitle').toUpperCase(), 10, C.ink60, { ls: 3 });
-  traitsTitle.position.set(RX, py);
-  content.addChild(traitsTitle);
-  py += 20;
-  ['trait1', 'trait2', 'trait3'].forEach(k => {
-    const chip = CV.makeChip(CV.t('sheet.' + k), { size: 10 });
-    if (chip.w > RW) chip.scale.set(RW / chip.w);
-    chip.position.set(RX, py);
-    content.addChild(chip);
-    py += chip.h + 8;
+  // особые приметы и перки
+  const postX = phone ? cardPad : rightX;
+  const postW = phone ? colW - cardPad * 2 : rightW;
+  let py = sy + 2;
+  const traitsTitle = CV.makeText(CV.t('sheet.traitsTitle').toUpperCase(), phone ? 10 : 10.5, C.ink60, { ls: 2.5 });
+  traitsTitle.position.set(postX, py);
+  cardContent.addChild(traitsTitle);
+  py += 18;
+  const traitChips = ['trait1', 'trait2', 'trait3'].map(k => {
+    const chip = CV.makeChip(CV.t('sheet.' + k), { size: phone ? 10 : 10.5 });
+    if (chip.w > postW) chip.scale.set(postW / chip.w);
+    return chip;
   });
+  py = flow(traitChips, postX, py, postW) + 10;
+  cardContent.addChild(...traitChips);
 
-  // перки
-  py += 6;
-  const perksTitle = CV.makeText(CV.t('sheet.perksTitle').toUpperCase(), 10, C.ink60, { ls: 3 });
-  perksTitle.position.set(RX, py);
-  content.addChild(perksTitle);
-  py += 20;
-  let pxx = RX, pMax = cardX + 660 - 30;
-  ['perk1', 'perk2', 'perk3', 'perk4', 'perk5', 'perk6'].forEach(k => {
-    const chip = CV.makeChip(CV.t('sheet.' + k), { size: 10, solid: true });
-    if (pxx + chip.w > pMax) { pxx = RX; py += chip.h + 8; }
-    chip.position.set(pxx, py);
-    content.addChild(chip);
-    pxx += chip.w + 8;
-  });
+  const perksTitle = CV.makeText(CV.t('sheet.perksTitle').toUpperCase(), phone ? 10 : 10.5, C.ink60, { ls: 2.5 });
+  perksTitle.position.set(postX, py);
+  cardContent.addChild(perksTitle);
+  py += 18;
+  const perkChips = ['perk1', 'perk2', 'perk3', 'perk4', 'perk5', 'perk6'].map(k =>
+    CV.makeChip(CV.t('sheet.' + k), { size: phone ? 10 : 10.5, solid: true }));
+  const perkBottom = flow(perkChips, postX, py, postW);
+  cardContent.addChild(...perkChips);
+
+  const contentBottom = Math.max(leftBottom, statsX === cardPad ? sy : leftBottom, perkBottom);
+  const cardH = contentBottom + cardPad;
+  const card = CV.makePanel(colW, cardH);
+  cardC.addChild(card, cardContent);
+  cardC.position.set(0, y);
+  content.addChild(cardC);
+  y += cardH + 22;
+
+  // штамп за улики — поверх фото
+  if (CV.State.nuggets.size >= 3) {
+    const gs = CV.makeStamp(CV.t('sheet.golden'), { size: 9.5, thick: 2, padX: 8, padY: 3, rotation: -6 * Math.PI / 180 });
+    if (gs.w > photoW - 8) gs.scale.set((photoW - 8) / gs.w);
+    CV.placeStamp(gs, cardPad + (photoW - gs.w * gs.scale.x) / 2, cardPad + photoH - gs.h * gs.scale.y - 8);
+    cardContent.addChild(gs);
+  }
 
   // ── секции ──
-  const section = (name, builder) => {
-    const head = CV.makeText(name, 19, C.gold, { head: true, weight: '600', upper: true, ls: 3 });
-    addAt(head, 74, y); y += 30;
-    builder();
-    y += 18;
-  };
-  const para = (text, size = 12.5, color = 0xd6d0c2, weight = '400') => {
-    const t = CV.makeText(text, size, color, { wrap: true, wrapWidth: 572, weight, ls: 0 });
-    addAt(t, 74, y);
-    y += t.height + 8;
-    return t;
-  };
+  section(CV.t('sheet.about'));
+  para(CV.t('sheet.aboutText'));
 
-  section(CV.t('sheet.about'), () => para(CV.t('sheet.aboutText')));
-  section(CV.t('sheet.edu'), () => para(CV.t('sheet.eduText')));
+  section(CV.t('sheet.edu'));
+  para(CV.t('sheet.eduText'));
 
   // дела-проекты: печать «запечатано» до депеши
   const caseFile = (nameKey, items, blockId, orderId) => {
     const ok = CV.State.blocksOpen.has(blockId);
-    // шапка дела
+    y += 8;
     const headRow = new PIXI.Container();
-    const no = CV.makeText('ДЕЛО ' + ({ exp: 1, skills: 2, playable: 3, stack: 4 }[blockId]), 10, C.grey, { ls: 3 });
-    const nm = CV.makeText(CV.t('sheet.' + nameKey), 16, ok ? 0xd6d0c2 : C.grey, { head: true, weight: '600', upper: true, ls: 2 });
-    const tag = CV.makeStamp(ok ? CV.t('map.openStamp') : CV.t('map.closed'), { size: 9, thick: 2, padX: 7, padY: 2, rotation: -3 * Math.PI / 180, alpha: ok ? 0.8 : 0.55 });
+    const no = CV.makeText(CV.t('sheet.caseWord') + ' ' + ({ exp: 1, skills: 2, playable: 3, stack: 4 }[blockId]), phone ? 9.5 : 10, C.grey, { ls: 2.5 });
+    const nm = CV.makeText(CV.t('sheet.' + nameKey), phone ? 15 : 17, ok ? 0xd6d0c2 : C.grey, { head: true, weight: '600', upper: true, ls: 1.5 });
+    CV.fitText(nm, colW - 160);
+    const tag = CV.makeStamp(ok ? CV.t('map.openStamp') : CV.t('map.closed'), { size: phone ? 8 : 9, thick: 2, padX: 7, padY: 2, rotation: -3 * Math.PI / 180, alpha: ok ? 0.8 : 0.55 });
     headRow.addChild(no, nm, tag);
-    no.position.set(74, y + 4);
-    nm.position.set(150, y);
-    if (nm.width > 400) nm.scale.set(400 / nm.width);
-    tag.position.set(678 - tag.w / 2, y + 14);
+    no.position.set(0, 4);
+    nm.position.set(66, 0);
+    CV.placeStamp(tag, colW - tag.w, 2);
+    headRow.position.set(0, y);
     content.addChild(headRow);
-    y += 34;
-    items.forEach(k => para((ok ? '✓ ' : '· ') + CV.t('sheet.' + k), 12, ok ? 0xd6d0c2 : 0x767b83));
-    if (!ok) para(CV.t('sheet.blockLocked', { o: CV.t('order.' + orderId + '.name') }), 11, C.stampLight, '700');
+    y += 30;
+    items.forEach(k => para((ok ? '✓ ' : '· ') + CV.t('sheet.' + k), phone ? 13.5 : 14, ok ? 0xd6d0c2 : 0x767b83));
+    if (!ok) para(CV.t('sheet.blockLocked', { o: CV.t('order.' + orderId + '.name') }), phone ? 12 : 12.5, C.stampLight, { weight: '700' });
     y += 8;
   };
 
+  section(CV.t('sheet.exp'));
   caseFile('exp', ['exp1', 'exp2', 'exp3'], 'exp', 'o1');
-  section(CV.t('sheet.skills'), () => {
+
+  section(CV.t('sheet.skills'));
+  {
     const ok = CV.State.blocksOpen.has('skills');
     ['sk1', 'sk2', 'sk3', 'sk4', 'sk5', 'sk6'].forEach(k =>
-      para((ok ? '✓ ' : '· ') + CV.t('sheet.' + k), 12, ok ? 0xd6d0c2 : 0x767b83));
-    if (!ok) para(CV.t('sheet.blockLocked', { o: CV.t('order.o3.name') }), 11, C.stampLight, '700');
-  });
+      para((ok ? '✓ ' : '· ') + CV.t('sheet.' + k), phone ? 13.5 : 14, ok ? 0xd6d0c2 : 0x767b83));
+    if (!ok) para(CV.t('sheet.blockLocked', { o: CV.t('order.o3.name') }), phone ? 12 : 12.5, C.stampLight, { weight: '700' });
+  }
+
   caseFile('playT', ['play1', 'play2', 'play3'], 'playable', 'o4');
   caseFile('stackT', ['stack1', 'stack2', 'stack3'], 'stack', 'o5');
 
   // честный блок
-  section(CV.t('sheet.missing'), () => {
-    const t = CV.makeText(CV.t('sheet.missingText'), 12, C.ink, { wrap: true, wrapWidth: 540, ls: 0 });
-    const box = CV.makeCard(572, t.height + 30, { red: true });
-    addAt(box, 74, y);
-    addAt(t, 96, y + 15);
-    y += t.height + 44;
-  });
+  section(CV.t('sheet.missing'));
+  {
+    const t = CV.makeText(CV.t('sheet.missingText'), phone ? 13 : 13.5, C.ink, {
+      wrap: true, wrapWidth: colW - 36, ls: 0, lineHeight: (phone ? 13 : 13.5) * 1.45,
+    });
+    const boxH = t.height + 30;
+    const box = CV.makeCard(colW, boxH, { red: true });
+    box.position.set(0, y);
+    t.position.set(16, y + 15);
+    content.addChild(box, t);
+    y += boxH + 16;
+  }
 
   // контакты
-  section(CV.t('sheet.contacts'), () => {
+  section(CV.t('sheet.contacts'));
+  {
     const c = CV.DATA.contacts;
-    const phone = CV.makeText(c.phone, 13.5, 0xd6d0c2, { weight: '700' });
-    addAt(phone, 74, y); y += 26;
-    const email = CV.makeText(c.email, 13.5, 0xd6d0c2, { weight: '700' });
-    addAt(email, 74, y); y += 26;
-    const gh = CV.makeText(c.github, 13.5, C.gold, { weight: '700' });
+    const phoneT = CV.makeText(c.phone, phone ? 14 : 14.5, 0xd6d0c2, { weight: '700' });
+    phoneT.position.set(0, y); content.addChild(phoneT); y += phoneT.height + 10;
+    const email = CV.makeText(c.email, phone ? 14 : 14.5, 0xd6d0c2, { weight: '700' });
+    email.position.set(0, y); content.addChild(email); y += email.height + 10;
+    const gh = CV.makeText(c.github, phone ? 14 : 14.5, C.gold, { weight: '700' });
     gh.eventMode = 'static'; gh.cursor = 'pointer';
-    gh.on('pointertap', () => { CV.Sfx.tap(); window.open(c.gh, '_blank'); });
-    addAt(gh, 74, y); y += 30;
-  });
+    gh.hitArea = new PIXI.Rectangle(0, -4, gh.width + 8, gh.height + 8);
+    gh.on('pointertap', () => { if (!sc || !sc.wasDrag()) { CV.Sfx.tap(); window.open(c.gh, '_blank'); } });
+    gh.position.set(0, y);
+    content.addChild(gh); y += gh.height + 22;
+  }
 
   // PDF
-  const bPdf = CV.makeButton(CV.t('sheet.dl'), 330, { height: 58, size: 13, red: true, onTap: () => { CV.Sfx.tap(); window.open(CV.DATA.contacts.pdf, '_blank'); } });
-  addAt(bPdf, 360 - 165, y + 6);
-  y += 76;
-  const note = CV.makeText(CV.t('common.pdfNote'), 10.5, C.grey, { align: 'center', wrap: true, wrapWidth: 460, ls: 0 });
+  const bPdf = CV.makeButton(CV.t('sheet.dl'), Math.min(colW, 360), {
+    height: 54, size: phone ? 12.5 : 13, red: true,
+    onTap: () => { if (!sc || !sc.wasDrag()) { CV.Sfx.tap(); window.open(CV.DATA.contacts.pdf, '_blank'); } },
+  });
+  bPdf.position.set((colW - bPdf.w) / 2, y);
+  content.addChild(bPdf);
+  y += bPdf.height + 10;
+
+  const note = CV.makeText(CV.t('common.pdfNote'), phone ? 11 : 11.5, C.grey, {
+    align: 'center', wrap: true, wrapWidth: Math.min(colW - 20, 460), ls: 0, lineHeight: (phone ? 11 : 11.5) * 1.45,
+  });
   note.anchor.set(0.5, 0);
-  addAt(note, 360, y + 4);
-  y += 52;
+  note.position.set(colW / 2, y);
+  content.addChild(note);
+  y += note.height + 22;
 
-  const contentH = y + 30;
-  const back = CV.makeButton(CV.t('common.back'), 170, { height: 50, size: 13, ghost: true, onTap: () => { CV.Sfx.tap(); CV.Scenes.switchTo('map'); } });
-  addAt(back, 360 - 85, contentH + 16);
+  const back = CV.makeButton(CV.t('common.back'), Math.min(colW, 220), {
+    height: 48, size: 12.5, ghost: true,
+    onTap: () => { CV.Sfx.tap(); CV.Scenes.switchTo('map'); },
+  });
+  back.position.set((colW - back.w) / 2, y);
+  content.addChild(back);
+  y += back.height + 26;
 
-  // прокрутка: тач/мышь тянет контент
-  const maxScroll = () => Math.max(0, contentH + 90 - (H() - 20));
-  view.eventMode = 'static';
-  let dragging = null;
-  view.on('pointerdown', e => {
-    dragging = { y: e.global.y, off: scroll._off || 0, moved: false };
+  const contentH = y;
+
+  // ── фиксированная шапка ──
+  const header = new PIXI.Container();
+  const hbg = new PIXI.Graphics();
+  hbg.beginFill(C.panel, 0.98); hbg.drawRect(0, 0, W, headerH); hbg.endFill();
+  hbg.beginFill(C.line); hbg.drawRect(0, headerH - 1, W, 1); hbg.endFill();
+  header.addChild(hbg);
+
+  const hBack = CV.makeButton(CV.t('common.back'), phone ? 78 : 100, {
+    height: 36, size: phone ? 10.5 : 11.5, ghost: true,
+    onTap: () => { CV.Sfx.tap(); CV.Scenes.switchTo('map'); },
   });
-  view.on('globalpointermove', e => {
-    if (!dragging) return;
-    const dy = e.global.y - dragging.y;
-    if (Math.abs(dy) > 6) dragging.moved = true;
-    scroll._off = dragging.off - dy;
+  hBack.position.set(pad, (headerH - 36) / 2);
+  const hTitle = CV.makeText(CV.t('sheet.title'), phone ? 14.5 : 16.5, C.paper, { head: true, weight: '700', upper: true, ls: 2 });
+  hTitle.anchor.set(0.5); hTitle.position.set(W / 2, headerH / 2);
+  const hPdf = new PIXI.Container();
+  const hPdfIc = CV.makeIcon('pdf', 22, C.paper);
+  hPdfIc.position.set(9, 9);
+  hPdf.addChild(hPdfIc);
+  hPdf.hitArea = new PIXI.Rectangle(0, 0, 40, 40);
+  hPdf.eventMode = 'static'; hPdf.cursor = 'pointer';
+  hPdf.position.set(W - pad - 40, (headerH - 40) / 2);
+  hPdf.on('pointertap', () => { CV.Sfx.tap(); window.open(CV.DATA.contacts.pdf, '_blank'); });
+  header.addChild(hBack, hTitle, hPdf);
+  view.addChild(header);
+
+  // ── прокрутка (колесо мыши, свайп, клавиатура) ──
+  const bar = CV.makeScrollBar(app, C.greyLine);
+  view.addChild(bar.g);
+  const viewTop = headerH + 8;
+  const viewH = H - viewTop - 8;
+  const maxScroll = () => Math.max(0, contentH + top + 18 - H);
+  const sc = CV.scrollArea(app, view, {
+    getMax: maxScroll,
+    apply: off => { content.y = top + off; },
+    onMove: off => bar.draw(off, maxScroll(), viewH, W - 6, viewTop),
   });
-  const endDrag = () => { dragging = null; };
-  view.on('pointerup', endDrag);
-  view.on('pointerupoutside', endDrag);
+  sc.update();
 
   return {
     view, scroll,
+    exit() { sc.destroy(); },
     update() {
-      scroll.y = -Math.min(Math.max(0, scroll._off || 0), maxScroll());
+      sc.update();
+      bar.draw(sc.off, maxScroll(), viewH, W - 6, viewTop);
     },
   };
 };

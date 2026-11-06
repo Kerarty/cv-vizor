@@ -1,38 +1,51 @@
 // ── сцена «Тюнер события»: расчётный лист на бумаге, чернила и красный карандаш ──
 CV.scenes = CV.scenes || {};
 CV.scenes.tuner = (view, app) => {
-  const W = () => app.screen.width, H = () => app.screen.height;
+  const L = CV.layout();
+  const { W, H, phone, pad, colW, colX, headerH } = L;
   const C = CV.COLORS;
   const params = { ...CV.Tuner.defaults };
   let result = CV.Tuner.compute(params);
 
   const bg = new PIXI.Graphics();
-  bg.beginFill(C.desk); bg.drawRect(0, 0, W(), H()); bg.endFill();
+  bg.beginFill(C.desk); bg.drawRect(0, 0, W, H); bg.endFill();
   view.addChild(bg);
+  view.addChild(CV.makeVignette(app, 0.32));
 
-  // группа контента — вертикально центрируется на любом экране
-  const G = new PIXI.Container();
-  G.position.y = Math.round((H() - 1240) / 2) - 24;
-  view.addChild(G);
+  // прокручиваемый лист
+  const scroll = new PIXI.Container();
+  view.addChild(scroll);
+  const contentTop = headerH + 14;
+  const paperW = Math.min(W - pad * 2, phone ? 700 : 720);
+  const paperX = (W - paperW) / 2;
+  const innerPad = phone ? 18 : 26;
+  const innerW = paperW - innerPad * 2;
 
-  // расчётный лист
-  const panel = CV.makePanel(660, 1130);
-  panel.position.set((W() - 660) / 2, 24);
-  G.addChild(panel);
+  const C2 = new PIXI.Container();
 
-  const title = CV.makeText(CV.t('tuner.title'), 30, C.ink, { head: true, weight: '700', upper: true });
-  title.anchor.set(0.5, 0); title.position.set(W() / 2, 64);
-  if (title.width > 560) title.scale.set(560 / title.width);
-  const intro = CV.makeText(CV.t('tuner.intro'), 12, C.ink60, { wrap: true, wrapWidth: 540, align: 'center', ls: 0 });
-  intro.anchor.set(0.5, 0); intro.position.set(W() / 2, 104);
-  const note = CV.makeText(CV.t('tuner.cohortNote'), 10.5, C.ink40, { align: 'center' });
+  let y = 0;
+  const title = CV.makeText(CV.t('tuner.title'), phone ? 23 : 30, C.ink, { head: true, weight: '700', upper: true });
+  title.anchor.set(0.5, 0);
+  CV.fitText(title, innerW);
+  title.position.set(innerW / 2, y);
+  C2.addChild(title);
+  y += title.height + 8;
+
+  const intro = CV.makeText(CV.t('tuner.intro'), phone ? 12.5 : 13.5, C.ink60, {
+    wrap: true, wrapWidth: innerW, align: 'center', ls: 0, lineHeight: (phone ? 12.5 : 13.5) * 1.42,
+  });
+  intro.anchor.set(0.5, 0);
+  intro.position.set(innerW / 2, y);
+  C2.addChild(intro);
+  y += intro.height + 6;
+
+  const note = CV.makeText(CV.t('tuner.cohortNote'), phone ? 10.5 : 11, C.ink40, { align: 'center' });
   note.anchor.set(0.5, 0);
-  note.position.set(W() / 2, 132);
-  G.addChild(title, intro, note);
+  note.position.set(innerW / 2, y);
+  C2.addChild(note);
+  y += note.height + 20;
 
-  // ── слайдеры: форма на бумаге ──
-  const sliders = new PIXI.Container();
-  G.addChild(sliders);
+  // ── слайдеры ──
   const sliderDefs = [
     { key: 'T', label: 'tuner.dur', unit: 'tuner.days', min: 3, max: 21, step: 1, fmt: v => v },
     { key: 'B', label: 'tuner.budget', unit: 'tuner.pts', min: 4000, max: 40000, step: 500, fmt: v => v.toLocaleString('ru-RU') },
@@ -40,22 +53,24 @@ CV.scenes.tuner = (view, app) => {
     { key: 'P', label: 'tuner.pace', unit: 'tuner.perDay', min: 400, max: 4000, step: 50, fmt: v => v.toLocaleString('ru-RU') },
     { key: 'd', label: 'tuner.decay', unit: 'tuner.perDayPct', min: 0, max: 8, step: 0.5, fmt: v => (v % 1 ? v.toFixed(1) : v) },
   ];
-  const rowX = (W() - 560) / 2, trackW = 340;
-  let sTop = 158;
+  const trackW = innerW;
 
   sliderDefs.forEach(def => {
     const row = new PIXI.Container();
-    row.position.set(rowX, sTop);
-    const labT = CV.makeText(CV.t(def.label), 13, C.ink, { weight: '700' });
-    const valT = CV.makeText(def.fmt(params[def.key]), 15, C.stamp, { weight: '700' });
-    valT.anchor.set(0, 0.5); valT.position.set(380, 8);
-    const unitT = CV.makeText(CV.t(def.unit), 10, C.ink40);
-    unitT.position.set(382, 22);
+    row.position.set(0, y);
+    const labT = CV.makeText(CV.t(def.label), phone ? 13 : 13.5, C.ink, { weight: '700' });
+    CV.fitText(labT, innerW - 110);
+    const valT = CV.makeText(def.fmt(params[def.key]), phone ? 15 : 16, C.stamp, { weight: '700' });
+    valT.anchor.set(1, 0);
+    valT.position.set(innerW, -1);
+    const unitT = CV.makeText(CV.t(def.unit), phone ? 9.5 : 10.5, C.ink40);
+    unitT.anchor.set(1, 0);
+    unitT.position.set(innerW, 18);
     labT.position.set(0, 0);
-    if (labT.width > 300) labT.scale.set(300 / labT.width);
+
     // трек: линия чернилами с засечками
     const track = new PIXI.Container();
-    track.position.set(0, 30);
+    track.position.set(0, 40);
     const tg = new PIXI.Graphics();
     tg.moveTo(0, 6); tg.lineTo(trackW, 6);
     tg.stroke({ width: 2, color: C.ink, alpha: 0.85 });
@@ -68,6 +83,7 @@ CV.scenes.tuner = (view, app) => {
     knob.beginFill(C.ink); knob.drawRect(-8, -2, 16, 16); knob.endFill();
     track.addChild(tg, fillG, knob);
     track.eventMode = 'static'; track.cursor = 'pointer';
+    track.hitArea = new PIXI.Rectangle(0, -6, trackW, 28);
     row.addChild(labT, valT, unitT, track);
 
     const setValue = (nx) => {
@@ -89,73 +105,90 @@ CV.scenes.tuner = (view, app) => {
       fillG.stroke({ width: 4, color: C.stamp });
     };
     track.on('pointerdown', e => {
+      e.stopPropagation();
       setValue(track.toLocal(e.global).x);
       const move = ev => setValue(track.toLocal(ev.global).x);
-      const up = () => { track.off('globalpointermove', move); track.off('pointerup', up); track.off('pointerupoutside', up); };
+      const up = () => {
+        track.off('globalpointermove', move);
+        track.off('pointerup', up); track.off('pointerupoutside', up);
+      };
       track.on('globalpointermove', move);
       track.on('pointerup', up); track.on('pointerupoutside', up);
     });
     setKnob();
-    sliders.addChild(row);
+    C2.addChild(row);
     def._setKnob = setKnob;
-    sTop += 64;
+    y += 72;
   });
 
-  // кривая плана: ровно / лавина — чипы-переключатели
+  // кривая плана: ровно / лавина
   const curveRow = new PIXI.Container();
-  curveRow.position.set(rowX, sTop + 6);
-  const curveLab = CV.makeText(CV.t('tuner.curve'), 13, C.ink, { weight: '700' });
-  const mkCurveChip = (label, x, onTap) => {
-    let chip = CV.makeChip(label, { size: 12, padX: 14 });
-    chip.eventMode = 'static'; chip.cursor = 'pointer';
-    chip.on('pointertap', () => { onTap(); CV.Sfx.tap(); });
-    chip.position.set(x, 0);
-    curveRow.addChild(chip);
-    return chip;
-  };
-  let bFlat = mkCurveChip(CV.t('tuner.flat'), 150, () => { params.k = 1; syncCurve(); redraw(); });
-  let bAval = mkCurveChip(CV.t('tuner.avalanche'), 280, () => { params.k = 1.6; syncCurve(); redraw(); });
+  curveRow.position.set(0, y);
+  const curveLab = CV.makeText(CV.t('tuner.curve'), phone ? 13 : 13.5, C.ink, { weight: '700' });
   curveRow.addChild(curveLab);
-  sliders.addChild(curveRow);
+  let bFlat = null, bAval = null;
+  let curveH = 42;
+  const layoutCurve = () => {
+    const chips = [bFlat, bAval].filter(Boolean);
+    const labelW = curveLab.width;
+    const total = labelW + 14 + chips.reduce((s, c) => s + c.w, 0) + (chips.length - 1) * 10;
+    if (total <= innerW) {
+      curveLab.position.set(0, 0);
+      let cx = labelW + 14;
+      chips.forEach(c => { c.position.set(cx, -2); cx += c.w + 10; });
+      curveH = 42;
+    } else {
+      curveLab.position.set(0, 0);
+      let cx = 0;
+      chips.forEach(c => { c.position.set(cx, 26); cx += c.w + 10; });
+      curveH = 70;
+    }
+  };
   const syncCurve = () => {
-    // активная кривая — тёмный перк, неактивная — пунктирный трейт
-    const swap = (chip, active) => {
-      const idx = curveRow.getChildIndex(chip);
-      const fresh = CV.makeChip(chip.label.text, { size: 12, padX: 14, solid: active });
+    const swap = (chip, active, k, label) => {
+      const fresh = CV.makeChip(label, { size: phone ? 11.5 : 12, padX: 12, solid: active });
       if (!active) fresh.alpha = 0.75;
       fresh.eventMode = 'static'; fresh.cursor = 'pointer';
-      fresh.position.copyFrom(chip.position);
-      curveRow.addChildAt(fresh, idx);
-      chip.destroy();
-      if (chip === bFlat) { bFlat = fresh; bFlat.on('pointertap', () => { params.k = 1; syncCurve(); redraw(); CV.Sfx.tap(); }); }
-      else { bAval = fresh; bAval.on('pointertap', () => { params.k = 1.6; syncCurve(); redraw(); CV.Sfx.tap(); }); }
+      fresh.on('pointertap', () => { params.k = k; syncCurve(); redraw(); CV.Sfx.tap(); });
+      if (chip) curveRow.removeChild(chip);
+      curveRow.addChild(fresh);
+      return fresh;
     };
-    swap(bFlat, params.k === 1);
-    swap(bAval, params.k !== 1);
+    bFlat = swap(bFlat, params.k === 1, 1, CV.t('tuner.flat'));
+    bAval = swap(bAval, params.k !== 1, 1.6, CV.t('tuner.avalanche'));
+    layoutCurve();
   };
   syncCurve();
-  sTop += 56;
+  C2.addChild(curveRow);
+  y += curveH + 12;
 
-  // ── график: миллировка ──
-  const chartCard = CV.makeCard(560, 280);
-  chartCard.position.set((W() - 560) / 2, sTop + 4);
-  G.addChild(chartCard);
+  // ── график ──
+  const chartH = phone ? 230 : 280;
+  const chartTop = y;
+  const chartCard = CV.makeCard(innerW, chartH);
+  chartCard.position.set(0, chartTop);
+  C2.addChild(chartCard);
   const chartG = new PIXI.Graphics();
-  const chartW = 560, chartH = 280;
-  chartG.position.set((W() - chartW) / 2, sTop + 4);
-  G.addChild(chartG);
+  chartG.position.set(0, chartTop);
+  C2.addChild(chartG);
+  const chartPadL = 44, chartPadR = 14, chartPadT = 16, chartPadB = 22;
 
   const drawChart = () => {
     const g = chartG;
     g.clear();
+    const plotW = innerW - chartPadL - chartPadR;
+    const plotH = chartH - chartPadT - chartPadB;
     // сетка миллировки
-    for (let i = 1; i < 5; i++) { g.moveTo(46, chartH * i / 5); g.lineTo(chartW - 16, chartH * i / 5); }
-    g.stroke({ width: 1, color: 0x9b8f74, alpha: 0.35 });
+    for (let i = 1; i < 5; i++) {
+      const gy = chartPadT + plotH * i / 5;
+      g.moveTo(chartPadL, gy); g.lineTo(innerW - chartPadR, gy);
+    }
+    g.stroke({ width: 1, color: 0x9b8f74, alpha: 0.32 });
     const maxV = Math.max(result.goal, ...result.series.pro) * 1.08 || 1;
-    const X = i => 46 + (chartW - 66) * (i / Math.max(1, params.T - 1));
-    const Y = v => chartH - 20 - (chartH - 40) * (v / maxV);
+    const X = i => chartPadL + plotW * (i / Math.max(1, params.T - 1));
+    const Y = v => chartPadT + plotH - plotH * (v / maxV);
     // цель — красный карандаш
-    g.moveTo(46, Y(result.goal)); g.lineTo(chartW - 16, Y(result.goal));
+    g.moveTo(chartPadL, Y(result.goal)); g.lineTo(innerW - chartPadR, Y(result.goal));
     g.stroke({ width: 2, color: C.stamp, alpha: 0.9 });
     const line = (arr, color, width = 3, alpha = 1) => {
       arr.forEach((v, i) => i ? g.lineTo(X(i), Y(v)) : g.moveTo(X(i), Y(v)));
@@ -166,53 +199,64 @@ CV.scenes.tuner = (view, app) => {
     line(result.series.newbie, 0x7d8ea0, 2, 0.9);
     line(result.series.pro, 0x6e7f72, 2, 0.9);
   };
+  drawChart();
+  y += chartH + 10;
 
   // легенда
-  const legend = new PIXI.Container();
   const legendDefs = [
-    ['tuner.chartPlan', C.goldDeep], ['tuner.chartAvg', C.ink], ['tuner.chartNew', 0x7d8ea0], ['tuner.chartPro', 0x6e7f72],
+    ['tuner.chartPlan', C.goldDeep], ['tuner.chartAvg', C.ink],
+    ['tuner.chartNew', 0x7d8ea0], ['tuner.chartPro', 0x6e7f72],
   ];
-  let lx = 0;
+  const legend = new PIXI.Container();
+  legend.position.set(2, y);
+  let lx = 0, ly = 0;
+  const legendMax = innerW - 4;
   legendDefs.forEach(([key, color]) => {
     const sw = new PIXI.Graphics();
-    sw.beginFill(color); sw.drawRect(0, 8, 22, 3); sw.endFill();
-    const lt = CV.makeText(CV.t(key), 11, C.ink60, { ls: 0 });
+    sw.beginFill(color); sw.drawRect(0, 6, 16, 3); sw.endFill();
+    const lt = CV.makeText(CV.t(key), phone ? 10.5 : 11.5, C.ink60, { ls: 0 });
     const item = new PIXI.Container();
     item.addChild(sw, lt);
-    lt.position.set(28, 2);
-    item.position.set(lx, 0);
-    lx += lt.width + 40;
+    lt.position.set(21, 0);
+    const iw = 21 + lt.width + 16;
+    if (lx > 0 && lx + iw > legendMax) { lx = 0; ly += 22; }
+    item.position.set(lx, ly);
+    lx += iw;
     legend.addChild(item);
   });
-  legend.position.set((W() - chartW) / 2 + 46, sTop + 4 + chartH + 12);
-  G.addChild(legend);
-  sTop += chartH + 56;
+  C2.addChild(legend);
+  y += ly + 28;
 
   // ── проверки ──
-  const checksC = new PIXI.Container();
-  G.addChild(checksC);
+  const checksTitle = CV.makeText(CV.t('tuner.checks').toUpperCase(), phone ? 12 : 12.5, C.ink60, { ls: 2.5 });
+  checksTitle.position.set(0, y);
+  C2.addChild(checksTitle);
+  y += 22;
   const checkRows = [];
-  ['c1', 'c2', 'c3', 'c4', 'c5'].forEach((cid, i) => {
+  ['c1', 'c2', 'c3', 'c4', 'c5'].forEach(cid => {
     const row = new PIXI.Container();
-    row.position.set((W() - 560) / 2, sTop + i * 36);
+    row.position.set(0, y);
     const ic = new PIXI.Container();
-    const tx = CV.makeText(CV.t('tuner.' + cid), 12.5, C.ink, { wrap: true, wrapWidth: 510, ls: 0 });
+    const tx = CV.makeText(CV.t('tuner.' + cid), phone ? 12.5 : 13, C.ink, {
+      wrap: true, wrapWidth: innerW - 32, ls: 0, lineHeight: (phone ? 12.5 : 13) * 1.4,
+    });
     row.addChild(ic, tx);
-    ic.position.set(0, 2); tx.position.set(36, 0);
-    checksC.addChild(row);
+    ic.position.set(0, 2); tx.position.set(30, 0);
+    C2.addChild(row);
     checkRows.push({ cid, ic });
+    y += Math.max(24, tx.height) + 8;
   });
-  sTop += 5 * 36 + 14;
+  y += 10;
 
   // вердикт
-  const verdictT = CV.makeText('', 22, C.stamp, { weight: '700', upper: true, ls: 2 });
-  const verdictSub = CV.makeText('', 12.5, C.ink60, { wrap: true, wrapWidth: 540, align: 'center', ls: 0 });
-  verdictT.anchor.set(0.5); verdictSub.anchor.set(0.5);
-  G.addChild(verdictT, verdictSub);
-
-  const back = CV.makeButton(CV.t('common.back'), 170, { height: 50, size: 13, ghost: true, onTap: () => { CV.Sfx.tap(); CV.Scenes.switchTo('map'); } });
-  back.position.set(W() / 2 - 85, 24 + 1130 + 14);
-  G.addChild(back);
+  const verdictT = CV.makeText('', phone ? 20 : 23, C.stamp, { weight: '700', upper: true, ls: 1.5 });
+  const verdictSub = CV.makeText('', phone ? 12 : 13, C.ink60, {
+    wrap: true, wrapWidth: innerW, align: 'center', ls: 0, lineHeight: (phone ? 12 : 13) * 1.42,
+  });
+  verdictT.anchor.set(0.5, 0); verdictSub.anchor.set(0.5, 0);
+  C2.addChild(verdictT, verdictSub);
+  const verdictY = y;
+  y += 78;
 
   const redraw = () => {
     result = CV.Tuner.compute(params);
@@ -221,16 +265,60 @@ CV.scenes.tuner = (view, app) => {
     checkRows.forEach(({ cid, ic }) => {
       ic.removeChildren().forEach(c => c.destroy({ children: true }));
       const chk = result.checks.find(c => c.id === cid);
-      ic.addChild(CV.statusIcon(chk.ok, 22));
+      ic.addChild(CV.statusIcon(chk.ok, 20));
     });
     verdictT.text = CV.t('tuner.verdict', { n: result.passed });
-    verdictT.position.set(W() / 2, sTop + 8);
+    CV.fitText(verdictT, innerW);
+    verdictT.position.set(innerW / 2, verdictY);
     verdictSub.text = result.passed === 5 ? CV.t('tuner.verdictOk') : CV.t('tuner.verdictFail');
-    verdictSub.position.set(W() / 2, sTop + 40);
+    verdictSub.position.set(innerW / 2, verdictY + 34);
   };
   redraw();
 
-  view.addChild(CV.makeVignette(app, 0.3));
+  const paperH = y + innerPad * 2;
+  const paper = CV.makePanel(paperW, paperH);
+  const paperC = new PIXI.Container();
+  paperC.position.set(paperX, contentTop);
+  paperC.addChild(paper, C2);
+  C2.position.set(innerPad, innerPad);
+  scroll.addChild(paperC);
 
-  return {};
+  // ── фиксированная шапка ──
+  const header = new PIXI.Container();
+  const hbg = new PIXI.Graphics();
+  hbg.beginFill(C.panel, 0.98); hbg.drawRect(0, 0, W, headerH); hbg.endFill();
+  hbg.beginFill(C.line); hbg.drawRect(0, headerH - 1, W, 1); hbg.endFill();
+  header.addChild(hbg);
+  const hBack = CV.makeButton(CV.t('common.back'), phone ? 78 : 100, {
+    height: 36, size: phone ? 10.5 : 11.5, ghost: true,
+    onTap: () => { CV.Sfx.tap(); CV.Scenes.switchTo('map'); },
+  });
+  hBack.position.set(pad, (headerH - 36) / 2);
+  const hTitle = CV.makeText(CV.t('tuner.title'), phone ? 14 : 16, C.paper, { head: true, weight: '700', upper: true, ls: 1 });
+  hTitle.anchor.set(0.5); hTitle.position.set(W / 2, headerH / 2);
+  CV.fitText(hTitle, W - 2 * (pad + 90));
+  header.addChild(hBack, hTitle);
+  view.addChild(header);
+
+  // ── прокрутка ──
+  const bar = CV.makeScrollBar(app, C.greyLine);
+  view.addChild(bar.g);
+  const viewTop = headerH + 8;
+  const viewH = H - viewTop - 8;
+  const maxScroll = () => Math.max(0, contentTop + paperH + 18 - H);
+  const sc = CV.scrollArea(app, view, {
+    getMax: maxScroll,
+    apply: off => { scroll.y = off; },
+    onMove: off => bar.draw(off, maxScroll(), viewH, W - 6, viewTop),
+  });
+  sc.update();
+
+  return {
+    view,
+    exit() { sc.destroy(); },
+    update() {
+      sc.update();
+      bar.draw(sc.off, maxScroll(), viewH, W - 6, viewTop);
+    },
+  };
 };

@@ -12,6 +12,7 @@ const SRC_FILES = [
   'src/i18n.js',
   'src/data.js',
   'src/theme.js',
+  'src/ui.js',
   'src/fx.js',
   'src/tuner.js',
   'src/sfx.js',

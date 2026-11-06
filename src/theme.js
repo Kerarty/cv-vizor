@@ -62,6 +62,7 @@ window.CV = window.CV || {};
       breakWords: true,
       align: opts.align || 'left',
     };
+    if (opts.lineHeight) style.lineHeight = opts.lineHeight;
     if (opts.italic) style.fontStyle = 'italic';
     return new PIXI.TextStyle(style);
   };
@@ -134,6 +135,7 @@ window.CV = window.CV || {};
     const size = opts.size || 15;
     const mkText = () => CV.makeText(label, size, opts.red ? C.paperLight : (opts.ghost ? 0xe8e4d8 : C.ink), { ls: size * 0.22, upper: true });
     const t = mkText();
+    if (t.width > w - 26) t.scale.set((w - 26) / t.width);
     t.anchor.set(0.5); t.position.set(w / 2, h / 2 - 1);
     c.addChild(up, t);
     c.eventMode = 'static'; c.cursor = 'pointer';
@@ -153,6 +155,7 @@ window.CV = window.CV || {};
     c.on('pointerout', () => { t.alpha = 1; });
     if (opts.onTap) c.on('pointertap', opts.onTap);
     c.label = t;
+    c.w = w; c.h = h;
     return c;
   };
 

@@ -15,19 +15,27 @@ CV.SceneManager = class {
     });
   }
   register(name, factory) { this.defs[name] = factory; }
+  _mount(name, params = {}) {
+    if (this.current) {
+      this.root.removeChild(this.current.view);
+      if (this.current.exit) this.current.exit();
+    }
+    const view = new PIXI.Container();
+    const scene = this.defs[name](view, this.app, params);
+    scene.view = view;
+    this.root.addChild(view);
+    this.current = scene;
+    this.currentName = name;
+    if (scene.enter) scene.enter(params);
+  }
   async switchTo(name, params = {}) {
     await this.curtain.transition(async () => {
-      if (this.current) {
-        this.root.removeChild(this.current.view);
-        if (this.current.exit) this.current.exit();
-      }
-      const view = new PIXI.Container();
-      const scene = this.defs[name](view, this.app, params);
-      scene.view = view;
-      this.root.addChild(view);
-      this.current = scene;
-      this.currentName = name;
-      if (scene.enter) await scene.enter(params);
+      this._mount(name, params);
     });
+  }
+  // пересборка без шторки: resize / смена ориентации
+  rebuild() {
+    if (!this.currentName) return;
+    this._mount(this.currentName, {});
   }
 };
